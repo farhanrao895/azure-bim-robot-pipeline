@@ -1,0 +1,39 @@
+{
+  "@id": "dtmi:construction:ElectricalSystem;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;3",
+  "displayName": "Electrical System",
+  "description": "Electrical infrastructure components",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "outletsCount",
+      "schema": "integer",
+      "description": "Number of electrical outlets"
+    },
+    {
+      "@type": "Property",
+      "name": "lightingType",
+      "schema": "string",
+      "description": "Type of lighting: LED, fluorescent, incandescent"
+    },
+    {
+      "@type": "Property",
+      "name": "switchesCount", 
+      "schema": "integer",
+      "description": "Number of light switches"
+    },
+    {
+      "@type": "Property",
+      "name": "powerRating",
+      "schema": "double",
+      "description": "Total electrical capacity in watts"
+    },
+    {
+      "@type": "Property",
+      "name": "installationStatus",
+      "schema": "string",
+      "description": "Status: planned, in-progress, completed, needs-repair"
+    }
+  ]
+}
