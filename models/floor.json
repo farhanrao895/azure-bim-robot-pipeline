@@ -1,0 +1,45 @@
+{
+  "@id": "dtmi:construction:Floor;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;3",
+  "displayName": "Floor",
+  "description": "A floor level within a building",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "floorNumber",
+      "schema": "integer",
+      "description": "Floor number (0=ground, -1=basement)"
+    },
+    {
+      "@type": "Property",
+      "name": "floorName",
+      "schema": "string",
+      "description": "Common name for the floor"
+    },
+    {
+      "@type": "Property",
+      "name": "floorArea",
+      "schema": "double", 
+      "description": "Total floor area in square meters"
+    },
+    {
+      "@type": "Property",
+      "name": "ceilingHeight",
+      "schema": "double",
+      "description": "Standard ceiling height in meters"
+    },
+    {
+      "@type": "Property",
+      "name": "occupancyType",
+      "schema": "string",
+      "description": "Primary use: office, retail, residential"
+    },
+    {
+      "@type": "Relationship",
+      "name": "contains",
+      "target": "dtmi:construction:Room;1", 
+      "description": "Floor contains rooms/spaces"
+    }
+  ]
+}
