@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "DIGITAL_TWINS_URL": "https://digitaltwinworksa.api.wcus.digitaltwins.azure.net",
+    "AZURE_OPENAI_API_KEY": "0d0ad883aff34d9d8cbfaef41a2c9b0b",
+    "STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=storageaifhconstruction;AccountKey=your_storage_key;EndpointSuffix=core.windows.net"
+  }
+}
