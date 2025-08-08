@@ -40,8 +40,6 @@ phase1-2/
 └── README.md # Documentation for Phase 1 & 2
 
 yaml
-Copy
-Edit
 
 ---
 
