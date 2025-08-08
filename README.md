@@ -1,101 +1,90 @@
-Phase 1 & Phase 2 — Azure BIM to Digital Twin & AI Task Planning
-📌 Project Overview
-This folder contains the combined code for Phase 1 and Phase 2 of the Azure BIM to Digital Twin & Robotics Automation Pipeline.
-The system converts BIM models into Azure Digital Twins, stores them in Azure Blob Storage, and uses AI to generate construction task plans for robotic execution.
+Azure BIM to Robot Pipeline – End-to-End Orchestration
+Overview
+This repository contains the complete multi-phase implementation of the Azure BIM to Digital Twin & Robotic Task Simulation Pipeline.
+The system demonstrates an end-to-end workflow starting from a Building Information Model (BIM) in IFC/Revit format, converting it to an Azure Digital Twin, using an LLM (Azure OpenAI) for Chain-of-Thought construction task planning, and executing the tasks in ROS2 & Gazebo robotic simulations.
 
-🎯 Objectives
-Phase 1 — BIM to Digital Twin Conversion
-Upload IFC/Revit BIM models to Azure Blob Storage.
+The pipeline is modular, with each phase building on the previous one.
 
-Parse BIM models into DTDL-compliant Digital Twin models.
+📂 Repository Structure
+Phase	Folder	Description
+Phase 1-2	Phase 1-2	BIM to Digital Twin Conversion (Phase 1) and LLM Task Orchestration Layer (Phase 2). Converts BIM models into Azure Digital Twins, stores them in Azure Blob Storage, and uses Azure OpenAI to generate structured task plans.
+Phase 3	Phase 3	Robotic Task Simulation. Integrates Azure PromptOrchestrator with ROS2 & Gazebo to simulate multi-robot construction workflows using LLM-driven multi-step reasoning.
+Phase 4	(Pending)	Automation & Orchestration. Will use Azure Functions, Logic Apps, and IoT Hub to automate triggering of LLM reasoning and robotic execution based on Digital Twin changes.
+Phase 5	(This repository)	Version Control & DevOps. Full GitHub repository with documentation, deployment scripts, and test data for all completed phases.
 
-Create and populate instances in Azure Digital Twins (ADT).
+🚀 Pipeline Workflow
+Phase 1 – BIM to Digital Twin Conversion
 
-Phase 2 — AI Task Planning & Orchestration
-Use Azure OpenAI with PromptOrchestrator to generate step-by-step construction tasks.
+Convert IFC/Revit BIM models into DTDL-compliant Azure Digital Twin models.
 
-Convert natural language instructions into structured JSON commands for robotics.
+Store models in Azure Blob Storage.
 
-Provide APIs to retrieve robot status and assigned tasks.
+Ingest models into Azure Digital Twins Explorer.
 
-✨ Features
-BIM Model Ingestion → IFC/Revit → Blob Storage → Azure Digital Twins.
+Phase 2 – LLM Task Orchestration
 
-DTDL Model Auto-Upload to ADT.
+Use Azure OpenAI with Chain-of-Thought prompting to generate detailed, structured task plans.
 
-AI-driven Task Planning via Azure OpenAI.
+Output JSON-formatted plans compatible with robotic control systems.
 
-Robot Status API for real-time monitoring.
+Phase 3 – Robotic Task Simulation
 
-Fully deployable to Azure Functions (Linux, Python 3.10+).
+Simulate multi-robot construction workflows in Gazebo.
 
-📂 Folder Structure
-graphql
-Copy
-Edit
-phase1-2/
-├── deploy_complete_pipeline.sh      # Deployment script to Azure
-├── function_app.py                   # Main Azure Functions app (Phase 1 & 2)
-├── host.json                         # Azure Functions host configuration
-├── local.settings.json               # Local dev settings (DO NOT commit real keys)
-├── requirements.txt                  # Python dependencies
-├── test_complete_pipeline.py         # Local/remote validation tests
-└── README.md                         # Documentation for Phase 1 & 2
-⚙️ Prerequisites
+Fetch reasoning-driven task plans from Azure PromptOrchestrator.
+
+Execute tasks in real-time with telemetry feedback to Azure.
+
+Phase 4 – Automation & Orchestration (Planned)
+
+Trigger task generation and simulation automatically when Digital Twin states change.
+
+Integrate IoT telemetry dashboards for monitoring.
+
+Phase 5 – Version Control & DevOps
+
+Maintain complete infrastructure and application code in GitHub.
+
+Provide clear documentation, run instructions, and test data.
+
+📜 How to Run Each Phase
+Phase 1-2
+See Phase 1-2/README.md for detailed setup and execution instructions.
+
+Phase 3
+See Phase 3/README.md for complete instructions on running the ROS2 & Gazebo simulation with PromptOrchestrator.
+
+🔧 Prerequisites
 Azure Subscription with:
 
 Azure Digital Twins
 
-Azure Blob Storage
-
-Azure Function App (Linux, Python 3.10+)
-
 Azure OpenAI
 
-Tools:
+Azure Functions
 
-bash
-Copy
-Edit
-az login
-az account set --subscription "<Your_Subscription_Name>"
-npm install -g azure-functions-core-tools@4 --unsafe-perm true
-🚀 Deployment
-To deploy to Azure Functions:
+Azure Blob Storage
 
-bash
-Copy
-Edit
-func azure functionapp publish <your-function-app-name> --python
-🧪 Testing
-Run the test script locally:
+ROS2 Humble
 
-bash
-Copy
-Edit
-python3 test_complete_pipeline.py
-Logs and telemetry can be viewed in Azure Portal → Function App → Monitor.
+Gazebo Garden
 
-🔑 Environment Variables
-Set these in Azure Function Configuration:
+Python 3.8+
 
-DIGITAL_TWINS_URL
+📊 Deliverables Summary
+Completed:
 
-AZURE_OPENAI_API_KEY
+✅ BIM → Digital Twin Conversion (Phase 1)
 
-STORAGE_ACCOUNT
+✅ LLM Task Planning (Phase 2)
 
-STORAGE_KEY
+✅ Multi-Robot Simulation with Reasoning (Phase 3)
 
-Do not store secrets in local.settings.json when committing to GitHub.
+Pending:
 
-📦 Outputs
-After running:
+⏳ Automation via Azure Functions/Logic Apps (Phase 4)
 
-BIM model uploaded to Blob Storage.
+📌 Notes
+Phase 5 focuses on packaging the completed work into a version-controlled, documented repository.
 
-Digital Twin model created in ADT.
-
-AI-generated construction task plan in JSON.
-
-Robot status available via API.
+Once Phase 4 is complete, its folder will be added here and linked in this README.
