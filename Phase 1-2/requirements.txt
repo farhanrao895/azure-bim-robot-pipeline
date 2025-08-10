@@ -1,9 +1,0 @@
-# Phase 1 Dependencies (Enhanced)
-azure-functions>=1.18.0
-azure-digitaltwins-core>=1.2.0
-azure-identity>=1.15.0
-azure-storage-blob>=12.19.0
-
-# Phase 2 Dependencies (Working)
-openai>=1.30.0
-PyYAML>=6.0
