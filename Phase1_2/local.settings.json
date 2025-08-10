@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "DIGITAL_TWINS_URL": "https://digitaltwinworksa.api.wcus.digitaltwins.azure.net",
+    "AZURE_OPENAI_ENDPOINT": "https://openainewfsawork.openai.azure.com/",
+    "STORAGE_CONNECTION_STRING": ""
+  }
+}

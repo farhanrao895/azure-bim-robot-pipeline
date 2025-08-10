@@ -1,0 +1,45 @@
+#!/bin/bash
+echo "Testing all 6 functions..."
+
+# Phase 1
+echo "1. Uploading DTDL Models..."
+curl "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/ModelUploader?code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ=="
+
+echo -e "\n2. Uploading BIM File..."
+curl -X POST "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/UploadBIM?filename=New_Actual_Building.ifc&code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ==" \
+  --data-binary @"/home/farhan/New_Actual_Building.ifc" \
+  -H "Content-Type: application/octet-stream"
+
+echo -e "\n3. Checking Robot Status..."
+curl "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/RobotStatus?building_id=building-new-actual-building-ifc&code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ=="
+
+# Phase 2
+echo -e "\n4. Generating AI Task Plan..."
+curl "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/TaskPlanner?building_id=building-new-actual-building-ifc&task_type=comprehensive_construction&code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ=="
+
+echo -e "\n5. Chain-of-Thought Planning..."
+curl "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/PromptOrchestrator?building_id=building-new-actual-building-ifc&complexity=detailed&min_nav_per_floor=5&require_upper_floor=true&code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ=="
+
+echo -e "\n6. Generating ROS2 Commands..."
+curl -X POST "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net/api/TaskOutputGenerator?format=json&robot_type=construction_robot&code=ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ==" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tasks": [
+      {
+        "description": "Site preparation for New Actual Building",
+        "robot_actions": ["navigate", "excavate", "level"],
+        "duration": 480,
+        "prerequisites": ["site_survey"],
+        "safety": ["area_clear", "equipment_ready"]
+      },
+      {
+        "description": "Foundation construction",
+        "robot_actions": ["place_rebar", "pour_concrete", "level_foundation"],
+        "duration": 600,
+        "prerequisites": ["site_preparation"],
+        "safety": ["concrete_quality", "safety_barriers"]
+      }
+    ]
+  }'
+
+echo -e "\nAll tests complete!"
