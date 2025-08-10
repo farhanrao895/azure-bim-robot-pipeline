@@ -1,0 +1,49 @@
+{
+  "timestamp": "2025-08-10T16:53:52.096563",
+  "building_type": "mixed_use_residential_commercial",
+  "total_floors": 2,
+  "building_area": 73,
+  "total_spaces": 5,
+  "orchestration_mode": "PromptOrchestrator_ChainOfThought",
+  "tasks_completed": 20,
+  "total_movements": 174,
+  "reasoning_history_count": 20,
+  "current_reasoning_steps": 3,
+  "robots": {
+    "azure_construction_robot_01": {
+      "current_space": "bathroom",
+      "floor": 0,
+      "position": {
+        "x": 0.6,
+        "y": 0.4,
+        "z": 0.5
+      },
+      "status": "active",
+      "specialization": "ground_floor_construction",
+      "llm_tasks_count": 8,
+      "current_reasoning": "Site Analysis",
+      "work_spaces": [
+        "bedroom_01",
+        "bedroom_02",
+        "kitchen",
+        "bathroom"
+      ]
+    },
+    "azure_construction_robot_02": {
+      "current_space": "lounge",
+      "floor": 1,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 4.0
+      },
+      "status": "active",
+      "specialization": "upper_floor_construction",
+      "llm_tasks_count": 4,
+      "current_reasoning": "Site Analysis",
+      "work_spaces": [
+        "lounge"
+      ]
+    }
+  }
+}

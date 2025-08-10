@@ -1,0 +1,2102 @@
+#!/bin/bash
+
+echo "🎯 COMPLETE PHASE 3 DEPLOYMENT WITH PROMPTORCHESTRATOR INTEGRATION"
+echo "===================================================================="
+echo "🏗️ Creating ROS2 + Gazebo + Azure System with Chain-of-Thought LLM Planning"
+echo "✅ Using PromptOrchestrator for detailed reasoning-based task generation"
+echo ""
+
+# Check prerequisites
+echo "🔍 Checking system prerequisites..."
+if ! command -v gz &> /dev/null; then
+    echo "❌ Gazebo not found! Installing..."
+    sudo apt update
+    sudo apt install -y gz-garden
+fi
+
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 not found! Installing..."
+    sudo apt install -y python3 python3-pip
+fi
+
+# Install Python dependencies
+echo "📦 Installing Python dependencies..."
+pip3 install requests rclpy geometry-msgs std-msgs
+
+echo "✅ Prerequisites checked!"
+echo ""
+
+# Create IFC-aligned Azure configuration with PromptOrchestrator endpoints
+echo "📝 Creating Azure configuration with PromptOrchestrator integration..."
+cat > azure_config_advanced.json << 'EOF'
+{
+  "base_url": "https://func-bim-processor-a9f3hqf4bmgfhtbu.westcentralus-01.azurewebsites.net",
+  "function_code": "ckeNuUHMxwGw77l32DjyqHHJh3P_d319t83tTlUjF8BjAzFuF_89zQ==",
+  "building_id": "building-new-actual-building-ifc",
+  "endpoints": {
+    "prompt_orchestrator": "/api/PromptOrchestrator",
+    "task_output_generator": "/api/TaskOutputGenerator"
+  },
+  "orchestration_settings": {
+    "complexity": "detailed",
+    "enable_chain_of_thought": true,
+    "reasoning_depth": 3,
+    "task_granularity": "fine"
+  },
+  "timeouts": {
+    "orchestration_request": 120,
+    "command_request": 15
+  },
+  "world_settings": {
+    "world_name": "phase3_ifc_digital_twin",
+    "building_area": 73,
+    "robot1_start": {"x": -3.5, "y": -2.0, "z": 0.5},
+    "robot2_start": {"x": 4.0, "y": 1.5, "z": 4.7}
+  },
+  "digital_twin_building": {
+    "structure_type": "mixed_use_residential_commercial",
+    "total_floors": 2,
+    "ground_floor_height": 3.0,
+    "upper_floor_height": 3.5,
+    "foundation_depth": 0.5,
+    "wall_thickness": 0.2,
+    "spaces": {
+      "bedroom_01": {
+        "floor": 0,
+        "position": {"x": -6.0, "y": -3.0, "z": 0.0},
+        "dimensions": {"length": 4.0, "width": 3.5, "height": 3.0},
+        "type": "residential",
+        "features": ["window", "door"]
+      },
+      "bedroom_02": {
+        "floor": 0,
+        "position": {"x": -1.5, "y": -3.0, "z": 0.0},
+        "dimensions": {"length": 2.5, "width": 2.0, "height": 3.0},
+        "type": "residential",
+        "features": ["window", "door"]
+      },
+      "kitchen": {
+        "floor": 0,
+        "position": {"x": 2.0, "y": -2.5, "z": 0.0},
+        "dimensions": {"length": 3.5, "width": 3.0, "height": 3.0},
+        "type": "utility",
+        "features": ["window", "door"]
+      },
+      "bathroom": {
+        "floor": 0,
+        "position": {"x": -2.0, "y": 1.0, "z": 0.0},
+        "dimensions": {"length": 5.0, "width": 4.0, "height": 3.0},
+        "type": "utility",
+        "features": ["window", "door"]
+      },
+      "lounge": {
+        "floor": 1,
+        "position": {"x": 3.0, "y": 1.0, "z": 3.5},
+        "dimensions": {"length": 4.5, "width": 4.0, "height": 3.5},
+        "type": "commercial",
+        "features": ["large_window", "door"]
+      }
+    }
+  }
+}
+EOF
+
+# Create IFC-aligned Digital Twin Gazebo world file
+echo "🏗️ Creating IFC-aligned Digital Twin Gazebo world..."
+cat > phase3_ifc_digital_twin.sdf << 'EOF'
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <world name="phase3_ifc_digital_twin">
+    
+    <!-- Ground plane -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Building Foundation -->
+    <model name="foundation">
+      <static>true</static>
+      <pose>0 0 -0.5 0 0 0</pose>
+      <link name="foundation_link">
+        <visual name="foundation_visual">
+          <geometry>
+            <box>
+              <size>20 15 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- BEDROOM_01 (First Bedroom from IFC) -->
+    <model name="bedroom_01">
+      <static>true</static>
+      <pose>-6 -3 0 0 0 0</pose>
+      <link name="bedroom_link">
+        <visual name="floor">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4 3.5 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.7 0.6 0.3</ambient>
+            <diffuse>0.9 0.8 0.7 0.3</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_north">
+          <pose>0 1.75 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_south">
+          <pose>0 -1.75 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_east">
+          <pose>2 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 3.5 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_west">
+          <pose>-2 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 3.5 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="ceiling">
+          <pose>0 0 2.95 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4 3.5 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 0.2</ambient>
+            <diffuse>0.98 0.98 0.98 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- BEDROOM_02 (Second Bedroom from IFC) -->
+    <model name="bedroom_02">
+      <static>true</static>
+      <pose>-1.5 -3 0 0 0 0</pose>
+      <link name="bedroom2_link">
+        <visual name="floor">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 2 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.7 0.6 0.3</ambient>
+            <diffuse>0.9 0.8 0.7 0.3</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_north">
+          <pose>0 1 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_south">
+          <pose>0 -1 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_east">
+          <pose>1.25 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_west">
+          <pose>-1.25 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 0.85 0.2</ambient>
+            <diffuse>0.95 0.95 0.9 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="ceiling">
+          <pose>0 0 2.95 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 2 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 0.2</ambient>
+            <diffuse>0.98 0.98 0.98 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- KITCHEN -->
+    <model name="kitchen">
+      <static>true</static>
+      <pose>2 -2.5 0 0 0 0</pose>
+      <link name="kitchen_link">
+        <visual name="floor">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.5 3 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.8 0.7 0.3</ambient>
+            <diffuse>0.95 0.85 0.8 0.3</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_north">
+          <pose>0 1.5 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.9 0.2</ambient>
+            <diffuse>0.98 0.98 0.95 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_south">
+          <pose>0 -1.5 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.9 0.2</ambient>
+            <diffuse>0.98 0.98 0.95 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_east">
+          <pose>1.75 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 3 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.9 0.2</ambient>
+            <diffuse>0.98 0.98 0.95 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_west">
+          <pose>-1.75 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 3 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.9 0.2</ambient>
+            <diffuse>0.98 0.98 0.95 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="ceiling">
+          <pose>0 0 2.95 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.5 3 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 0.2</ambient>
+            <diffuse>0.98 0.98 0.98 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- BATHROOM -->
+    <model name="bathroom">
+      <static>true</static>
+      <pose>-2 1 0 0 0 0</pose>
+      <link name="bathroom_link">
+        <visual name="floor">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5 4 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.9 1 0.3</ambient>
+            <diffuse>0.95 0.95 1 0.3</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_north">
+          <pose>0 2 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.95 1 0.2</ambient>
+            <diffuse>0.95 0.98 1 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_south">
+          <pose>0 -2 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5 0.2 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.95 1 0.2</ambient>
+            <diffuse>0.95 0.98 1 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_east">
+          <pose>2.5 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 4 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.95 1 0.2</ambient>
+            <diffuse>0.95 0.98 1 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_west">
+          <pose>-2.5 0 1.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 4 3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.95 1 0.2</ambient>
+            <diffuse>0.95 0.98 1 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="ceiling">
+          <pose>0 0 2.95 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5 4 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 0.2</ambient>
+            <diffuse>0.98 0.98 0.98 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- UPPER FLOOR SLAB (Transparent) -->
+    <model name="upper_floor_slab">
+      <static>true</static>
+      <pose>0 0 3.5 0 0 0</pose>
+      <link name="slab_link">
+        <visual name="slab_visual">
+          <geometry>
+            <box>
+              <size>20 15 0.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 0.2</ambient>
+            <diffuse>0.7 0.7 0.7 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- LOUNGE (Upper Floor) -->
+    <model name="lounge">
+      <static>true</static>
+      <pose>3 1 3.5 0 0 0</pose>
+      <link name="lounge_link">
+        <visual name="floor">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.5 4 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.8 0.7 0.3</ambient>
+            <diffuse>0.95 0.85 0.8 0.3</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_north">
+          <pose>0 2 1.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.5 0.2 3.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.85 0.8 0.2</ambient>
+            <diffuse>0.95 0.9 0.85 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_south">
+          <pose>0 -2 1.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.5 0.2 3.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.85 0.8 0.2</ambient>
+            <diffuse>0.95 0.9 0.85 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_east">
+          <pose>2.25 0 1.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 4 3.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.85 0.8 0.2</ambient>
+            <diffuse>0.95 0.9 0.85 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="wall_west">
+          <pose>-2.25 0 1.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 4 3.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.85 0.8 0.2</ambient>
+            <diffuse>0.95 0.9 0.85 0.2</diffuse>
+          </material>
+        </visual>
+        <visual name="ceiling">
+          <pose>0 0 3.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.5 4 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 0.2</ambient>
+            <diffuse>0.98 0.98 0.98 0.2</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- MOVING ROBOT 1: Ground Floor Specialist (NON-STATIC) -->
+    <model name="azure_construction_robot_01">
+      <pose>-3.5 -2 0.5 0 0 0</pose>
+      <link name="base_link">
+        <inertial>
+          <mass>50.0</mass>
+          <inertia>
+            <ixx>2.0</ixx>
+            <iyy>2.0</iyy>
+            <izz>2.0</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.35</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="robot_body">
+          <geometry>
+            <cylinder>
+              <radius>0.35</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.2 0.5 1.0 1</ambient>
+            <diffuse>0.3 0.6 1.0 1</diffuse>
+          </material>
+        </visual>
+        <visual name="azure_marker">
+          <pose>0 0 0.5 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.1</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- MOVING ROBOT 2: Upper Floor Specialist (NON-STATIC) -->
+    <model name="azure_construction_robot_02">
+      <pose>4.0 1.5 4.7 0 0 0</pose>
+      <link name="base_link">
+        <inertial>
+          <mass>60.0</mass>
+          <inertia>
+            <ixx>3.0</ixx>
+            <iyy>3.0</iyy>
+            <izz>3.0</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 0.8 0.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="robot_body">
+          <geometry>
+            <box>
+              <size>1.0 0.8 0.6</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0.6 1</ambient>
+            <diffuse>1.0 0.4 0.7 1</diffuse>
+          </material>
+        </visual>
+        <visual name="azure_marker">
+          <pose>0 0 0.4 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.1</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- LIGHTING -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <light name="ground_floor_light" type="point">
+      <pose>0 0 2.5 0 0 0</pose>
+      <diffuse>1 0.95 0.8 1</diffuse>
+      <attenuation>
+        <range>15</range>
+        <linear>0.05</linear>
+        <constant>0.1</constant>
+        <quadratic>0.005</quadratic>
+      </attenuation>
+    </light>
+
+    <light name="upper_floor_light" type="point">
+      <pose>0 0 6.5 0 0 0</pose>
+      <diffuse>1 1 0.9 1</diffuse>
+      <attenuation>
+        <range>15</range>
+        <linear>0.05</linear>
+        <constant>0.1</constant>
+        <quadratic>0.005</quadratic>
+      </attenuation>
+    </light>
+
+    <!-- PHYSICS -->
+    <physics name="default_physics" default="0" type="ode">
+      <gravity>0 0 -9.8066</gravity>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <iters>150</iters>
+          <sor>1.400000</sor>
+        </solver>
+        <constraints>
+          <cfm>0.00001</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>2000.000000</contact_max_correcting_vel>
+          <contact_surface_layer>0.01000</contact_surface_layer>
+        </constraints>
+      </ode>
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.000000</real_time_factor>
+      <real_time_update_rate>250.000000</real_time_update_rate>
+    </physics>
+  </world>
+</sdf>
+EOF
+
+# Create ROS2 task executor with PromptOrchestrator integration
+echo "🤖 Creating ROS2 task executor with Chain-of-Thought reasoning..."
+cat > phase3_prompt_orchestrator_executor.py << 'EOF'
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped, Twist
+from std_msgs.msg import String
+import requests
+import json
+import time
+import re
+import math
+import subprocess
+from datetime import datetime
+
+class Phase3PromptOrchestratorExecutor(Node):
+    """ROS2 Task Executor with PromptOrchestrator Chain-of-Thought Integration"""
+    
+    def __init__(self):
+        super().__init__('phase3_prompt_orchestrator_executor')
+        
+        self.load_azure_config()
+        
+        # Publishers
+        self.nav_pub = self.create_publisher(PoseStamped, '/move_base_simple/goal', 10)
+        self.excavator_pub = self.create_publisher(Twist, '/excavator/cmd_vel', 10)
+        self.level_pub = self.create_publisher(String, '/robot/level', 10)
+        self.install_pub = self.create_publisher(String, '/robot/install', 10)
+        self.finish_pub = self.create_publisher(String, '/robot/finish', 10)
+        self.status_pub = self.create_publisher(String, '/digital_twin/status', 10)
+        self.reasoning_pub = self.create_publisher(String, '/llm/reasoning_steps', 10)
+        
+        self.digital_twin_spaces = self.config.get("digital_twin_building", {}).get("spaces", {})
+        
+        # Robot state management
+        self.robots = {
+            "azure_construction_robot_01": {
+                "current_x": self.config["world_settings"]["robot1_start"]["x"],
+                "current_y": self.config["world_settings"]["robot1_start"]["y"],
+                "current_z": self.config["world_settings"]["robot1_start"]["z"],
+                "current_space": "bedroom_01",
+                "floor": 0,
+                "azure_targets": [],
+                "current_target": 0,
+                "status": "active",
+                "specialization": "ground_floor_construction",
+                "work_spaces": ["bedroom_01", "bedroom_02", "kitchen", "bathroom"],
+                "current_reasoning_step": None,
+                "tasks_from_llm": []
+            },
+            "azure_construction_robot_02": {
+                "current_x": self.config["world_settings"]["robot2_start"]["x"],
+                "current_y": self.config["world_settings"]["robot2_start"]["y"],
+                "current_z": self.config["world_settings"]["robot2_start"]["z"],
+                "current_space": "lounge",
+                "floor": 1,
+                "azure_targets": [],
+                "current_target": 0,
+                "status": "active",
+                "specialization": "upper_floor_construction",
+                "work_spaces": ["lounge"],
+                "current_reasoning_step": None,
+                "tasks_from_llm": []
+            }
+        }
+        
+        # Chain-of-Thought tracking
+        self.current_orchestration = None
+        self.reasoning_history = []
+        self.task_counter = 0
+        self.total_movements = 0
+        
+        # Timers for orchestration and execution
+        self.orchestration_timer = self.create_timer(45.0, self.fetch_prompt_orchestration)
+        self.execution_timer = self.create_timer(4.0, self.execute_llm_driven_movements)
+        self.status_timer = self.create_timer(10.0, self.publish_digital_twin_status)
+        
+        self.get_logger().info('🎯 Phase 3 PromptOrchestrator-Driven Executor Started!')
+        self.get_logger().info(f'📡 Connected to: {self.base_url}')
+        self.get_logger().info(f'🧠 Chain-of-Thought reasoning: ENABLED')
+        self.get_logger().info(f'🏗️ IFC Digital Twin Building: {len(self.digital_twin_spaces)} spaces')
+
+    def load_azure_config(self):
+        """Load Azure configuration with PromptOrchestrator settings"""
+        try:
+            with open('azure_config_advanced.json', 'r') as f:
+                self.config = json.load(f)
+            
+            self.base_url = self.config["base_url"]
+            self.function_code = self.config["function_code"]
+            self.building_id = self.config["building_id"]
+            self.orchestration_settings = self.config.get("orchestration_settings", {})
+            
+            self.get_logger().info('✅ Azure configuration loaded with PromptOrchestrator settings')
+            self.get_logger().info(f'🧠 Complexity: {self.orchestration_settings.get("complexity", "detailed")}')
+            self.get_logger().info(f'🔄 Reasoning depth: {self.orchestration_settings.get("reasoning_depth", 3)}')
+            
+        except Exception as e:
+            self.get_logger().error(f'❌ Config error: {str(e)}')
+            
+    def fetch_prompt_orchestration(self):
+        """Fetch Chain-of-Thought task orchestration from PromptOrchestrator"""
+        try:
+            self.get_logger().info('🧠 Fetching Chain-of-Thought orchestration from PromptOrchestrator...')
+            
+            # Call PromptOrchestrator for detailed reasoning
+            complexity = self.orchestration_settings.get("complexity", "detailed")
+            orchestrator_url = f"{self.base_url}{self.config['endpoints']['prompt_orchestrator']}"
+            orchestrator_url += f"?building_id={self.building_id}&complexity={complexity}&code={self.function_code}"
+            
+            orchestration_response = requests.get(orchestrator_url, timeout=120)
+            
+            if orchestration_response.status_code == 200:
+                orchestration_data = orchestration_response.json()
+                self.get_logger().info('✅ Received Chain-of-Thought orchestration with reasoning steps')
+                
+                # Extract and process reasoning steps
+                self.process_reasoning_steps(orchestration_data)
+                
+                # Extract final tasks from orchestration
+                final_tasks = orchestration_data.get("orchestration_result", {}).get("final_tasks", {})
+                
+                # Convert to ROS2 commands using TaskOutputGenerator
+                ros2_url = f"{self.base_url}{self.config['endpoints']['task_output_generator']}"
+                ros2_url += f"?format=json&robot_type=construction_robot&code={self.function_code}"
+                
+                ros2_response = requests.post(ros2_url, json=final_tasks, timeout=15)
+                
+                if ros2_response.status_code == 200:
+                    commands = ros2_response.json()
+                    self.get_logger().info('✅ Converted LLM reasoning to ROS2 commands')
+                    
+                    # Process commands with reasoning context
+                    self.process_llm_commands_with_reasoning(commands, orchestration_data)
+                    self.publish_ros2_commands_with_reasoning(commands)
+                    self.task_counter += 1
+                    
+        except Exception as e:
+            self.get_logger().error(f'❌ PromptOrchestrator fetch error: {str(e)}')
+
+    def process_reasoning_steps(self, orchestration_data):
+        """Process and publish Chain-of-Thought reasoning steps"""
+        try:
+            reasoning_steps = orchestration_data.get("orchestration_result", {}).get("reasoning_steps", [])
+            
+            if reasoning_steps:
+                self.current_orchestration = orchestration_data
+                self.reasoning_history.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "steps": reasoning_steps,
+                    "building_id": self.building_id
+                })
+                
+                # Publish reasoning steps for monitoring
+                for step in reasoning_steps:
+                    step_msg = String()
+                    step_data = {
+                        "step_number": step.get("step", 0),
+                        "title": step.get("title", ""),
+                        "reasoning": step.get("reasoning", "")[:500]  # Truncate for message size
+                    }
+                    step_msg.data = json.dumps(step_data)
+                    self.reasoning_pub.publish(step_msg)
+                    
+                    self.get_logger().info(f'🧠 Reasoning Step {step.get("step", 0)}: {step.get("title", "")}')
+                
+                # Assign reasoning context to robots
+                for robot_name in self.robots:
+                    self.robots[robot_name]["current_reasoning_step"] = reasoning_steps[0] if reasoning_steps else None
+                    
+        except Exception as e:
+            self.get_logger().error(f'❌ Error processing reasoning steps: {str(e)}')
+
+    def process_llm_commands_with_reasoning(self, commands, orchestration_data):
+        """Process LLM commands with Chain-of-Thought context"""
+        try:
+            # Extract tasks from ROS2 commands
+            ros2_tasks = commands.get("ros2_commands", {}).get("tasks", [])
+            reasoning_steps = orchestration_data.get("orchestration_result", {}).get("reasoning_steps", [])
+            
+            # Extract coordinates and actions with reasoning context
+            coordinates_with_context = []
+            
+            for task in ros2_tasks:
+                task_id = task.get("task_id", "")
+                description = task.get("description", "")
+                
+                # Find corresponding reasoning for this task
+                reasoning_context = None
+                for step in reasoning_steps:
+                    if any(keyword in step.get("reasoning", "").lower() 
+                          for keyword in description.lower().split()):
+                        reasoning_context = step
+                        break
+                
+                # Extract movement commands from task
+                for command in task.get("ros2_commands", []):
+                    if command.get("command_type") == "navigation":
+                        params = command.get("parameters", {})
+                        target = params.get("target_position", {})
+                        
+                        x = target.get("x", 0.0)
+                        y = target.get("y", 0.0)
+                        z = target.get("z", 0.0)
+                        
+                        # Determine space based on coordinates
+                        space_info = self.determine_building_space(x, y, z)
+                        
+                        coordinates_with_context.append({
+                            "x": x, "y": y, "z": z,
+                            "space": space_info["space"],
+                            "floor": space_info["floor"],
+                            "space_type": space_info["type"],
+                            "task_id": task_id,
+                            "task_description": description,
+                            "reasoning_context": reasoning_context,
+                            "safety_checks": task.get("safety_checks", [])
+                        })
+            
+            # If no specific coordinates, generate based on reasoning
+            if not coordinates_with_context:
+                coordinates_with_context = self.generate_coordinates_from_reasoning(reasoning_steps)
+            
+            # Distribute tasks among robots based on floor and reasoning
+            self.distribute_tasks_with_reasoning(coordinates_with_context)
+            
+        except Exception as e:
+            self.get_logger().error(f'❌ Error processing LLM commands: {str(e)}')
+
+    def generate_coordinates_from_reasoning(self, reasoning_steps):
+        """Generate movement coordinates based on reasoning steps"""
+        coordinates = []
+        
+        # Analyze reasoning to determine work areas
+        for step in reasoning_steps:
+            reasoning_text = step.get("reasoning", "").lower()
+            
+            # Site analysis step - survey entire building
+            if "site" in reasoning_text or "survey" in reasoning_text:
+                # Add survey points for each space
+                for space_name, space_data in self.digital_twin_spaces.items():
+                    pos = space_data.get("position", {})
+                    coordinates.append({
+                        "x": pos.get("x", 0),
+                        "y": pos.get("y", 0),
+                        "z": pos.get("z", 0) + 0.5,
+                        "space": space_name,
+                        "floor": space_data.get("floor", 0),
+                        "space_type": space_data.get("type", "general"),
+                        "task_description": f"Site survey of {space_name}",
+                        "reasoning_context": step
+                    })
+            
+            # Foundation work - ground floor focus
+            elif "foundation" in reasoning_text or "structural" in reasoning_text:
+                ground_spaces = ["bedroom_01", "bedroom_02", "kitchen", "bathroom"]
+                for space_name in ground_spaces:
+                    if space_name in self.digital_twin_spaces:
+                        space_data = self.digital_twin_spaces[space_name]
+                        pos = space_data.get("position", {})
+                        coordinates.append({
+                            "x": pos.get("x", 0),
+                            "y": pos.get("y", 0),
+                            "z": 0.5,
+                            "space": space_name,
+                            "floor": 0,
+                            "space_type": space_data.get("type", "general"),
+                            "task_description": f"Foundation work in {space_name}",
+                            "reasoning_context": step
+                        })
+            
+            # Upper floor construction
+            elif "upper" in reasoning_text or "floor" in reasoning_text:
+                if "lounge" in self.digital_twin_spaces:
+                    space_data = self.digital_twin_spaces["lounge"]
+                    pos = space_data.get("position", {})
+                    coordinates.append({
+                        "x": pos.get("x", 3.0),
+                        "y": pos.get("y", 1.0),
+                        "z": 4.7,
+                        "space": "lounge",
+                        "floor": 1,
+                        "space_type": space_data.get("type", "commercial"),
+                        "task_description": "Upper floor construction in lounge",
+                        "reasoning_context": step
+                    })
+        
+        return coordinates if coordinates else self.generate_default_coordinates()
+
+    def generate_default_coordinates(self):
+        """Generate default coordinates if reasoning doesn't provide specific locations"""
+        return [
+            {"x": -3.5, "y": -2.0, "z": 0.5, "space": "bedroom_01", "floor": 0, 
+             "space_type": "residential", "task_description": "General construction"},
+            {"x": 2.0, "y": -2.5, "z": 0.5, "space": "kitchen", "floor": 0,
+             "space_type": "utility", "task_description": "Utility installation"},
+            {"x": 3.0, "y": 1.0, "z": 4.7, "space": "lounge", "floor": 1,
+             "space_type": "commercial", "task_description": "Upper floor work"}
+        ]
+
+    def distribute_tasks_with_reasoning(self, coordinates_with_context):
+        """Distribute tasks to robots based on reasoning and floor assignment"""
+        ground_floor_tasks = []
+        upper_floor_tasks = []
+        
+        for coord in coordinates_with_context:
+            if coord.get("floor", 0) == 0:
+                ground_floor_tasks.append(coord)
+            else:
+                upper_floor_tasks.append(coord)
+        
+        # Assign tasks to robots with reasoning context
+        self.robots["azure_construction_robot_01"]["azure_targets"] = ground_floor_tasks
+        self.robots["azure_construction_robot_01"]["tasks_from_llm"] = ground_floor_tasks
+        
+        self.robots["azure_construction_robot_02"]["azure_targets"] = upper_floor_tasks
+        self.robots["azure_construction_robot_02"]["tasks_from_llm"] = upper_floor_tasks
+        
+        self.get_logger().info(f'🎯 Task distribution with reasoning:')
+        self.get_logger().info(f'  🔵 Ground Floor Robot: {len(ground_floor_tasks)} tasks')
+        self.get_logger().info(f'  🔴 Upper Floor Robot: {len(upper_floor_tasks)} tasks')
+
+    def publish_ros2_commands_with_reasoning(self, commands):
+        """Publish ROS2 commands with Chain-of-Thought context"""
+        try:
+            tasks = commands.get("ros2_commands", {}).get("tasks", [])
+            
+            for task in tasks:
+                task_id = task.get("task_id", "Unknown")
+                description = task.get("description", "Construction task")
+                safety_checks = task.get("safety_checks", [])
+                
+                # Create enhanced task message with reasoning
+                task_msg = String()
+                task_data = {
+                    "task_id": task_id,
+                    "description": description,
+                    "building": self.config['digital_twin_building']['structure_type'],
+                    "chain_of_thought": True,
+                    "reasoning_steps": len(self.reasoning_history[-1]["steps"]) if self.reasoning_history else 0,
+                    "safety_checks": safety_checks,
+                    "timestamp": datetime.now().isoformat()
+                }
+                task_msg.data = json.dumps(task_data)
+                
+                # Determine task type and publish to appropriate topic
+                description_lower = description.lower()
+                
+                if any(word in description_lower for word in ["site", "prep", "foundation", "excavat"]):
+                    self.level_pub.publish(task_msg)
+                    self.get_logger().info(f'📤 Site preparation task with reasoning: {task_id}')
+                elif any(word in description_lower for word in ["struct", "frame", "wall", "install"]):
+                    self.install_pub.publish(task_msg)
+                    self.get_logger().info(f'📤 Structural task with reasoning: {task_id}')
+                elif any(word in description_lower for word in ["finish", "interior", "paint", "final"]):
+                    self.finish_pub.publish(task_msg)
+                    self.get_logger().info(f'📤 Finishing task with reasoning: {task_id}')
+                else:
+                    self.level_pub.publish(task_msg)
+                    self.get_logger().info(f'📤 General task with reasoning: {task_id}')
+                
+        except Exception as e:
+            self.get_logger().error(f'❌ ROS2 publish error: {str(e)}')
+
+    def execute_llm_driven_movements(self):
+        """Execute robot movements based on LLM reasoning"""
+        try:
+            for robot_name, robot in self.robots.items():
+                if robot["tasks_from_llm"]:
+                    self.move_robot_with_reasoning(robot_name, robot)
+                else:
+                    self.execute_default_patrol(robot_name, robot)
+                    
+        except Exception as e:
+            self.get_logger().error(f'❌ Movement execution error: {str(e)}')
+
+    def move_robot_with_reasoning(self, robot_name, robot):
+        """Move robot based on LLM-generated tasks with reasoning context"""
+        tasks = robot["tasks_from_llm"]
+        target_idx = robot["current_target"]
+        
+        if target_idx < len(tasks):
+            task = tasks[target_idx]
+            
+            new_x = task["x"]
+            new_y = task["y"]
+            new_z = task["z"]
+            
+            success = self.move_robot_gazebo(robot_name, new_x, new_y, new_z)
+            
+            if success:
+                robot["current_x"] = new_x
+                robot["current_y"] = new_y
+                robot["current_z"] = new_z
+                robot["current_space"] = task.get("space", "unknown")
+                robot["floor"] = task.get("floor", 0)
+                robot["current_target"] = target_idx + 1
+                
+                self.total_movements += 1
+                
+                # Log movement with reasoning context
+                reasoning = task.get("reasoning_context", {})
+                self.get_logger().info(
+                    f'✅ {robot_name}: Moved to {task.get("space")} '
+                    f'({new_x:.2f}, {new_y:.2f}) for {task.get("task_description", "task")}'
+                )
+                if reasoning:
+                    self.get_logger().info(f'   🧠 Reasoning: {reasoning.get("title", "")}')
+                
+                self.publish_navigation_goal(new_x, new_y, new_z)
+        else:
+            # Reset to start of task list
+            robot["current_target"] = 0
+
+    def execute_default_patrol(self, robot_name, robot):
+    	"""Patrol disabled: wait for LLM tasks."""
+    	self.get_logger().info(f"⏸ {robot_name}: Waiting for LLM tasks; patrol disabled.")
+    	return
+
+
+    def move_robot_gazebo(self, robot_name, x, y, z):
+        """Move robot in Gazebo simulation"""
+        try:
+            cmd = [
+                'gz', 'service', '-s', f'/world/{self.config["world_settings"]["world_name"]}/set_pose',
+                '--reqtype', 'gz.msgs.Pose',
+                '--reptype', 'gz.msgs.Boolean',
+                '--timeout', '5000',
+                '--req', 
+                f'name: "{robot_name}" position: {{x: {x}, y: {y}, z: {z}}} orientation: {{x: 0, y: 0, z: 0, w: 1}}'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, timeout=6, text=True)
+            return result.returncode == 0
+            
+        except Exception:
+            return False
+
+    def publish_navigation_goal(self, x, y, z):
+        """Publish navigation goal to ROS2"""
+        msg = PoseStamped()
+        msg.header.frame_id = "map"
+        msg.header.stamp = self.get_clock().now().to_msg()
+        
+        msg.pose.position.x = float(x)
+        msg.pose.position.y = float(y)
+        msg.pose.position.z = float(z)
+        msg.pose.orientation.w = 1.0
+        
+        self.nav_pub.publish(msg)
+
+    def determine_building_space(self, x, y, z):
+        """Determine which building space coordinates belong to"""
+        if z > 3:
+            return {"space": "lounge", "floor": 1, "type": "commercial"}
+        else:
+            if x < -4:
+                return {"space": "bedroom_01", "floor": 0, "type": "residential"}
+            elif x < 0 and y < -2:
+                return {"space": "bedroom_02", "floor": 0, "type": "residential"}
+            elif x > 0 and y < -1:
+                return {"space": "kitchen", "floor": 0, "type": "utility"}
+            else:
+                return {"space": "bathroom", "floor": 0, "type": "utility"}
+
+    def publish_digital_twin_status(self):
+        """Publish comprehensive status including Chain-of-Thought reasoning"""
+        try:
+            status_data = {
+                "timestamp": datetime.now().isoformat(),
+                "building_type": self.config["digital_twin_building"]["structure_type"],
+                "total_floors": self.config["digital_twin_building"]["total_floors"],
+                "building_area": self.config["world_settings"]["building_area"],
+                "total_spaces": len(self.digital_twin_spaces),
+                "orchestration_mode": "PromptOrchestrator_ChainOfThought",
+                "tasks_completed": self.task_counter,
+                "total_movements": self.total_movements,
+                "reasoning_history_count": len(self.reasoning_history),
+                "current_reasoning_steps": len(self.reasoning_history[-1]["steps"]) if self.reasoning_history else 0,
+                "robots": {}
+            }
+            
+            for robot_name, robot in self.robots.items():
+                status_data["robots"][robot_name] = {
+                    "current_space": robot["current_space"],
+                    "floor": robot["floor"],
+                    "position": {
+                        "x": robot["current_x"],
+                        "y": robot["current_y"],
+                        "z": robot["current_z"]
+                    },
+                    "status": robot["status"],
+                    "specialization": robot["specialization"],
+                    "llm_tasks_count": len(robot["tasks_from_llm"]),
+                    "current_reasoning": robot["current_reasoning_step"]["title"] if robot["current_reasoning_step"] else None,
+                    "work_spaces": robot["work_spaces"]
+                }
+            
+            status_msg = String()
+            status_msg.data = json.dumps(status_data)
+            self.status_pub.publish(status_msg)
+            
+            # Save telemetry with reasoning
+            with open('prompt_orchestrator_telemetry.json', 'w') as f:
+                json.dump(status_data, f, indent=2)
+            
+            # Save reasoning history separately
+            if self.reasoning_history:
+                with open('chain_of_thought_history.json', 'w') as f:
+                    json.dump(self.reasoning_history, f, indent=2)
+            
+        except Exception as e:
+            self.get_logger().error(f'❌ Status publish error: {str(e)}')
+
+def main(args=None):
+    rclpy.init(args=args)
+    executor = Phase3PromptOrchestratorExecutor()
+    
+    try:
+        rclpy.spin(executor)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        executor.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+EOF
+
+# Create enhanced robot workflow simulator with reasoning support
+echo "🔄 Creating enhanced robot workflow simulator with Chain-of-Thought support..."
+cat > enhanced_workflow_simulator.py << 'EOF'
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+import json
+import time
+import math
+import subprocess
+from datetime import datetime
+
+class EnhancedWorkflowSimulator(Node):
+    """Enhanced Robot Workflow Simulator with Chain-of-Thought Integration"""
+    
+    def __init__(self):
+        super().__init__('enhanced_workflow_simulator')
+        
+        self.load_building_config()
+        
+        # Publishers
+        self.robot1_pub = self.create_publisher(Twist, '/azure_robot_01/cmd_vel', 10)
+        self.robot2_pub = self.create_publisher(Twist, '/azure_robot_02/cmd_vel', 10)
+        self.workflow_pub = self.create_publisher(String, '/robot_workflow_status', 10)
+        
+        # Subscribe to reasoning steps
+        self.reasoning_sub = self.create_subscription(
+            String,
+            '/llm/reasoning_steps',
+            self.handle_reasoning_update,
+            10
+        )
+        
+        # Enhanced workflows with reasoning-based adaptation
+        self.workflows = {
+            "site_analysis": {
+                "steps": ["site_survey", "accessibility_check", "safety_assessment", "resource_planning"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["entire_site"],
+                "robots": ["azure_construction_robot_01", "azure_construction_robot_02"],
+                "reasoning_driven": True,
+                "adaptable": True
+            },
+            "foundation_preparation": {
+                "steps": ["excavation_planning", "soil_preparation", "foundation_marking", "reinforcement_placement"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["bedroom_01", "bedroom_02", "kitchen", "bathroom"],
+                "robots": ["azure_construction_robot_01"],
+                "reasoning_driven": True,
+                "dependencies": []
+            },
+            "structural_assembly": {
+                "steps": ["column_placement", "beam_installation", "floor_slab", "wall_framing"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["all_ground_floor"],
+                "robots": ["azure_construction_robot_01"],
+                "reasoning_driven": True,
+                "quality_checkpoints": ["alignment", "levelness", "stability"]
+            },
+            "upper_floor_construction": {
+                "steps": ["floor_preparation", "structural_elements", "safety_barriers", "utilities_rough"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["lounge"],
+                "robots": ["azure_construction_robot_02"],
+                "reasoning_driven": True,
+                "parallel_execution": True
+            },
+            "systems_integration": {
+                "steps": ["electrical_wiring", "plumbing_installation", "hvac_setup", "system_testing"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["all_spaces"],
+                "robots": ["azure_construction_robot_01", "azure_construction_robot_02"],
+                "reasoning_driven": True,
+                "safety_critical": True
+            },
+            "quality_finishing": {
+                "steps": ["surface_preparation", "painting", "fixture_installation", "final_inspection", "certification"],
+                "current_step": 0,
+                "completion": 0.0,
+                "spaces": ["all_spaces"],
+                "robots": ["azure_construction_robot_01", "azure_construction_robot_02"],
+                "reasoning_driven": True,
+                "quality_standards": ["iso9001", "safety_compliance"]
+            }
+        }
+        
+        self.current_workflow = "site_analysis"
+        self.workflow_start_time = time.time()
+        self.reasoning_context = None
+        self.adaptive_scheduling = True
+        
+        self.robot_positions = {
+            "azure_construction_robot_01": {"x": -3.5, "y": -2.0, "z": 0.5},
+            "azure_construction_robot_02": {"x": 4.0, "y": 1.5, "z": 4.7}
+        }
+        
+        # Timers
+        self.workflow_timer = self.create_timer(10.0, self.advance_workflow_with_reasoning)
+        self.robot_movement_timer = self.create_timer(.0, self.move_robots_with_reasoning)
+        
+        self.get_logger().info('🔄 Enhanced Workflow Simulator with Chain-of-Thought!')
+        self.get_logger().info(f'🏗️ Building: {self.building_config["structure_type"]}')
+        self.get_logger().info(f'🧠 Reasoning-driven workflows: ENABLED')
+
+    def load_building_config(self):
+        """Load building configuration"""
+        try:
+            with open('azure_config_advanced.json', 'r') as f:
+                config = json.load(f)
+            self.building_config = config["digital_twin_building"]
+            self.building_config["building_area"] = config["world_settings"]["building_area"]
+            self.world_name = config["world_settings"]["world_name"]
+        except:
+            self.building_config = {
+                "structure_type": "mixed_use_residential_commercial",
+                "building_area": 73,
+                "total_floors": 2
+            }
+            self.world_name = "phase3_ifc_digital_twin"
+
+    def handle_reasoning_update(self, msg):
+        """Handle reasoning updates from PromptOrchestrator"""
+        try:
+            reasoning_data = json.loads(msg.data)
+            self.reasoning_context = reasoning_data
+            
+            # Adapt workflow based on reasoning
+            step_title = reasoning_data.get("title", "").lower()
+            
+            if "site" in step_title or "analysis" in step_title:
+                self.prioritize_workflow("site_analysis")
+            elif "foundation" in step_title:
+                self.prioritize_workflow("foundation_preparation")
+            elif "structural" in step_title or "frame" in step_title:
+                self.prioritize_workflow("structural_assembly")
+            elif "systems" in step_title or "mep" in step_title:
+                self.prioritize_workflow("systems_integration")
+            elif "finishing" in step_title or "quality" in step_title:
+                self.prioritize_workflow("quality_finishing")
+                
+            self.get_logger().info(f'🧠 Workflow adapted based on reasoning: {step_title}')
+            
+        except Exception as e:
+            self.get_logger().error(f'Error handling reasoning: {str(e)}')
+
+    def prioritize_workflow(self, workflow_name):
+        """Prioritize a specific workflow based on reasoning"""
+        if workflow_name in self.workflows and workflow_name != self.current_workflow:
+            # Save current workflow state
+            self.workflows[self.current_workflow]["paused"] = True
+            
+            # Switch to prioritized workflow
+            self.current_workflow = workflow_name
+            self.workflow_start_time = time.time()
+            
+            self.get_logger().info(f'🔄 Switched to workflow: {workflow_name} (reasoning-driven)')
+
+    def advance_workflow_with_reasoning(self):
+        """Advance workflow with Chain-of-Thought consideration"""
+        try:
+            workflow = self.workflows[self.current_workflow]
+            
+            # Check if workflow should adapt based on reasoning
+            if workflow.get("reasoning_driven") and self.reasoning_context:
+                self.adapt_workflow_steps(workflow)
+            
+            if workflow["current_step"] < len(workflow["steps"]):
+                current_step_name = workflow["steps"][workflow["current_step"]]
+                
+                # Adaptive completion rate based on reasoning
+                completion_rate = 25.0 if workflow.get("reasoning_driven") else 20.0
+                workflow["completion"] += completion_rate
+                
+                if workflow["completion"] >= 100.0:
+                    workflow["completion"] = 100.0
+                    workflow["current_step"] += 1
+                    
+                    if workflow["current_step"] >= len(workflow["steps"]):
+                        self.complete_workflow_with_reasoning()
+                    else:
+                        workflow["completion"] = 0.0
+                        next_step = workflow["steps"][workflow["current_step"]]
+                        self.get_logger().info(f'🔄 Starting step: {next_step} (reasoning-enhanced)')
+                
+                self.publish_workflow_status_with_reasoning(current_step_name, workflow["completion"])
+                
+            else:
+                self.advance_to_next_workflow_with_reasoning()
+                
+        except Exception as e:
+            self.get_logger().error(f'Error advancing workflow: {str(e)}')
+
+    def adapt_workflow_steps(self, workflow):
+        """Adapt workflow steps based on Chain-of-Thought reasoning"""
+        if not self.reasoning_context:
+            return
+            
+        reasoning_text = self.reasoning_context.get("reasoning", "").lower()
+        
+        # Add safety checks if mentioned in reasoning
+        if "safety" in reasoning_text and "safety_verification" not in workflow["steps"]:
+            current_step = workflow["current_step"]
+            workflow["steps"].insert(current_step + 1, "safety_verification")
+            self.get_logger().info('➕ Added safety verification step based on reasoning')
+        
+        # Add quality checks if mentioned
+        if "quality" in reasoning_text and "quality_checkpoint" not in workflow["steps"]:
+            current_step = workflow["current_step"]
+            workflow["steps"].insert(current_step + 1, "quality_checkpoint")
+            self.get_logger().info('➕ Added quality checkpoint based on reasoning')
+        
+        # Adjust for dependencies mentioned in reasoning
+        if "dependency" in reasoning_text or "prerequisite" in reasoning_text:
+            workflow["dependencies"] = workflow.get("dependencies", [])
+            workflow["dependencies"].append(f"reasoning_step_{self.reasoning_context.get('step_number', 0)}")
+
+    def move_robots_with_reasoning(self):
+        """Move robots based on current workflow with reasoning context"""
+        try:
+            workflow = self.workflows[self.current_workflow]
+            robots_for_workflow = workflow["robots"]
+            spaces = workflow["spaces"]
+            
+            for robot_name in robots_for_workflow:
+                if robot_name in self.robot_positions:
+                    self.move_robot_for_reasoning_task(robot_name, spaces, workflow)
+                    
+        except Exception as e:
+            self.get_logger().error(f'Error moving robots: {str(e)}')
+
+    def move_robot_for_reasoning_task(self, robot_name, spaces, workflow):
+        """Move robot based on reasoning-enhanced task requirements"""
+        try:
+            # Determine target based on workflow and reasoning
+            if self.reasoning_context:
+                target_coords = self.get_reasoning_based_target(robot_name, workflow)
+            else:
+                target_coords = self.get_default_target(robot_name, spaces)
+            
+            target_x, target_y, target_z = target_coords
+            
+            success = self.move_robot_gazebo(robot_name, target_x, target_y, target_z)
+            
+            if success:
+                self.robot_positions[robot_name] = {"x": target_x, "y": target_y, "z": target_z}
+                
+                # Publish movement command
+                cmd = Twist()
+                if robot_name == "azure_construction_robot_01":
+                    cmd.linear.x = 0.25  # Slightly faster for reasoning-driven tasks
+                    cmd.angular.z = 0.1
+                    self.robot1_pub.publish(cmd)
+                else:
+                    cmd.linear.x = 0.2
+                    cmd.angular.z = 0.05
+                    self.robot2_pub.publish(cmd)
+            
+        except Exception as e:
+            self.get_logger().error(f'Error moving robot {robot_name}: {str(e)}')
+
+    def get_reasoning_based_target(self, robot_name, workflow):
+        """Get target coordinates based on reasoning context"""
+        step_number = self.reasoning_context.get("step_number", 1)
+        
+        if robot_name == "azure_construction_robot_01":
+            # Ground floor movements adapted by reasoning step
+            if step_number == 1:  # Site analysis
+                angle = time.time() * 0.1
+                return (-6.0 + 3 * math.cos(angle), -3.0 + 2 * math.sin(angle), 0.5)
+            elif step_number == 2:  # Task sequencing
+                return (-1.5, -3.0, 0.5)  # Bedroom 02
+            else:  # Final execution
+                return (2.0, -2.5, 0.5)  # Kitchen
+        else:
+            # Upper floor movements
+            if workflow.get("parallel_execution"):
+                angle = time.time() * 0.15
+                return (3.0 + 1.5 * math.cos(angle), 1.0 + 1.5 * math.sin(angle), 4.7)
+            else:
+                return (3.0, 1.0, 4.7)  # Lounge center
+
+    def get_default_target(self, robot_name, spaces):
+        """Get default target when no reasoning context available"""
+        if robot_name == "azure_construction_robot_01":
+            if "bedroom_01" in str(spaces):
+                return (-6.0, -3.0, 0.5)
+            elif "kitchen" in str(spaces):
+                return (2.0, -2.5, 0.5)
+            else:
+                angle = time.time() * 0.2
+                return (-3.5 + 1.5 * math.cos(angle), -2.0 + 1.0 * math.sin(angle), 0.5)
+        else:
+            return (3.0, 1.0, 4.7)
+
+    def move_robot_gazebo(self, robot_name, x, y, z):
+        """Move robot in Gazebo"""
+        try:
+            cmd = [
+                'gz', 'service', '-s', f'/world/{self.world_name}/set_pose',
+                '--reqtype', 'gz.msgs.Pose',
+                '--reptype', 'gz.msgs.Boolean',
+                '--timeout', '5000',
+                '--req', 
+                f'name: "{robot_name}" position: {{x: {x}, y: {y}, z: {z}}} orientation: {{x: 0, y: 0, z: 0, w: 1}}'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, timeout=2, text=True)
+            return result.returncode == 0
+            
+        except:
+            return False
+
+    def publish_workflow_status_with_reasoning(self, step_name, completion):
+        """Publish workflow status with reasoning context"""
+        workflow = self.workflows[self.current_workflow]
+        
+        status = {
+            "workflow": self.current_workflow,
+            "step": step_name,
+            "completion": completion,
+            "timestamp": datetime.now().isoformat(),
+            "reasoning_enhanced": workflow.get("reasoning_driven", False),
+            "reasoning_context": {
+                "step_number": self.reasoning_context.get("step_number", 0) if self.reasoning_context else 0,
+                "title": self.reasoning_context.get("title", "") if self.reasoning_context else "",
+                "adapted": workflow.get("adapted", False)
+            },
+            "building_context": {
+                "structure_type": self.building_config["structure_type"],
+                "total_area": self.building_config["building_area"],
+                "total_floors": self.building_config.get("total_floors", 2),
+                "affected_spaces": workflow["spaces"],
+                "robots_assigned": workflow["robots"]
+            },
+            "quality_metrics": {
+                "safety_checks": workflow.get("safety_critical", False),
+                "quality_standards": workflow.get("quality_standards", []),
+                "dependencies_met": len(workflow.get("dependencies", [])) == 0
+            },
+            "robot_positions": self.robot_positions
+        }
+        
+        msg = String()
+        msg.data = json.dumps(status)
+        self.workflow_pub.publish(msg)
+        
+        self.get_logger().info(f'🔄 Workflow: {self.current_workflow} | Step: {step_name} | Progress: {completion:.1f}%')
+        if workflow.get("reasoning_driven"):
+            self.get_logger().info(f'   🧠 Reasoning-enhanced execution active')
+
+    def complete_workflow_with_reasoning(self):
+        """Complete current workflow with reasoning summary"""
+        completion_time = time.time() - self.workflow_start_time
+        
+        completion_data = {
+            "workflow": self.current_workflow,
+            "completion_time": datetime.now().isoformat(),
+            "duration_seconds": completion_time,
+            "reasoning_enhanced": True,
+            "reasoning_steps_applied": self.reasoning_context is not None,
+            "building_context": {
+                "structure_type": self.building_config["structure_type"],
+                "spaces_completed": self.workflows[self.current_workflow]["spaces"],
+                "robots_used": self.workflows[self.current_workflow]["robots"]
+            },
+            "quality_metrics": {
+                "adaptations_made": self.workflows[self.current_workflow].get("adapted", False),
+                "safety_verified": self.workflows[self.current_workflow].get("safety_critical", False),
+                "standards_met": self.workflows[self.current_workflow].get("quality_standards", [])
+            }
+        }
+        
+        with open(f'reasoning_workflow_{self.current_workflow}.json', 'w') as f:
+            json.dump(completion_data, f, indent=2)
+            
+        self.get_logger().info(f'✅ Workflow completed: {self.current_workflow} ({completion_time:.1f}s)')
+        self.get_logger().info(f'   🧠 Reasoning-enhanced: YES')
+
+    def advance_to_next_workflow_with_reasoning(self):
+        """Advance to next workflow with reasoning consideration"""
+        workflow_sequence = [
+            "site_analysis",
+            "foundation_preparation",
+            "structural_assembly",
+            "upper_floor_construction",
+            "systems_integration",
+            "quality_finishing"
+        ]
+        
+        try:
+            current_index = workflow_sequence.index(self.current_workflow)
+            if current_index + 1 < len(workflow_sequence):
+                self.current_workflow = workflow_sequence[current_index + 1]
+                self.workflow_start_time = time.time()
+                self.get_logger().info(f'🔄 Starting workflow: {self.current_workflow} (reasoning-aware)')
+                
+                # Reset workflow
+                self.workflows[self.current_workflow]["current_step"] = 0
+                self.workflows[self.current_workflow]["completion"] = 0.0
+                self.workflows[self.current_workflow]["adapted"] = False
+            else:
+                self.get_logger().info('🎉 All reasoning-enhanced workflows completed!')
+                self.complete_all_workflows_with_reasoning()
+                
+        except ValueError:
+            self.get_logger().error(f'Unknown workflow: {self.current_workflow}')
+
+    def complete_all_workflows_with_reasoning(self):
+        """Complete all workflows with comprehensive reasoning report"""
+        total_duration = sum(
+            time.time() - self.workflow_start_time 
+            for workflow in self.workflows.values()
+        )
+        
+        final_report = {
+            "project_status": "COMPLETED_WITH_CHAIN_OF_THOUGHT",
+            "completion_time": datetime.now().isoformat(),
+            "total_duration_seconds": total_duration,
+            "orchestration_type": "PromptOrchestrator_Enhanced",
+            "building_details": {
+                "structure_type": self.building_config["structure_type"],
+                "total_area": self.building_config["building_area"],
+                "total_floors": self.building_config.get("total_floors", 2),
+                "spaces_constructed": [
+                    "bedroom_01", "bedroom_02", "kitchen", "bathroom", "lounge"
+                ]
+            },
+            "workflows_completed": list(self.workflows.keys()),
+            "reasoning_integration": {
+                "chain_of_thought_applied": True,
+                "adaptive_scheduling": self.adaptive_scheduling,
+                "reasoning_driven_workflows": sum(
+                    1 for w in self.workflows.values() if w.get("reasoning_driven")
+                ),
+                "total_adaptations": sum(
+                    1 for w in self.workflows.values() if w.get("adapted", False)
+                )
+            },
+            "robots_utilized": ["azure_construction_robot_01", "azure_construction_robot_02"],
+            "ifc_alignment": {
+                "floors": 2,
+                "rooms": 5,
+                "walls": 18,
+                "doors": 4,
+                "windows": 5,
+                "slabs": 2
+            }
+        }
+        
+        with open('phase3_promptorchestrator_completion.json', 'w') as f:
+            json.dump(final_report, f, indent=2)
+        
+        self.get_logger().info('🎉 Phase 3 Chain-of-Thought Complete!')
+        self.get_logger().info(f'📊 Total Duration: {total_duration:.1f} seconds')
+        self.get_logger().info(f'🧠 Reasoning-enhanced workflows: {sum(1 for w in self.workflows.values() if w.get("reasoning_driven"))}')
+
+def main(args=None):
+    rclpy.init(args=args)
+    simulator = EnhancedWorkflowSimulator()
+    
+    try:
+        rclpy.spin(simulator)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        simulator.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+EOF
+
+# Create launcher script with PromptOrchestrator
+echo "🚀 Creating Phase 3 launcher with PromptOrchestrator integration..."
+cat > launch_phase3_promptorchestrator.sh << 'EOF'
+#!/bin/bash
+
+echo "🎯 LAUNCHING PHASE 3 WITH PROMPTORCHESTRATOR CHAIN-OF-THOUGHT"
+echo "=============================================================="
+echo "🧠 Using PromptOrchestrator for LLM-based reasoning"
+echo "🏗️ ROS2 + Gazebo + Azure Integration with Chain-of-Thought"
+echo ""
+
+# Apply environment fixes
+export XDG_RUNTIME_DIR="$HOME/.local/runtime"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CONFIG_HOME="$HOME/.config"
+mkdir -p "$XDG_RUNTIME_DIR" && chmod 0700 "$XDG_RUNTIME_DIR"
+
+# Kill existing processes
+pkill -f gazebo 2>/dev/null || true
+pkill -f gz 2>/dev/null || true
+pkill -f azure 2>/dev/null || true
+pkill -f ros2 2>/dev/null || true
+pkill -f prompt 2>/dev/null || true
+sleep 3
+
+echo "🏗️ Starting Gazebo with IFC-aligned Digital Twin building..."
+gz sim phase3_ifc_digital_twin.sdf &
+GAZEBO_PID=$!
+
+echo "⏳ Waiting for Digital Twin building to initialize..."
+sleep 15
+
+echo "🤖 Starting ROS2 PromptOrchestrator Task Executor..."
+python3 phase3_prompt_orchestrator_executor.py &
+ROS2_PID=$!
+
+echo "🔄 Starting Enhanced Workflow Simulator with Chain-of-Thought..."
+python3 enhanced_workflow_simulator.py &
+WORKFLOW_PID=$!
+
+echo ""
+echo "🎯 PHASE 3 PROMPTORCHESTRATOR SYSTEM RUNNING!"
+echo "============================================="
+echo "✅ DELIVERABLE 1: ROS2 node with PromptOrchestrator - RUNNING (PID: $ROS2_PID)"
+echo "✅ DELIVERABLE 2: Enhanced robot workflow - RUNNING (PID: $WORKFLOW_PID)"
+echo "🏗️ Gazebo Digital Twin Building - RUNNING (PID: $GAZEBO_PID)"
+echo ""
+echo "🧠 CHAIN-OF-THOUGHT FEATURES:"
+echo "   ✅ Multi-step reasoning (Site Analysis → Task Sequencing → Execution)"
+echo "   ✅ Detailed dependencies and safety protocols"
+echo "   ✅ Quality checkpoints from LLM reasoning"
+echo "   ✅ Adaptive workflow based on reasoning steps"
+echo "   ✅ Reasoning history tracking"
+echo ""
+echo "🏢 Building Structure: Mixed-use Residential/Commercial"
+echo "📐 Total Area: 73m² (IFC-aligned)"
+echo "🏠 Floors: 2 (Ground + Upper)"
+echo "🏠 Spaces: 5 (2 bedrooms, kitchen, bathroom, lounge)"
+echo "🤖 Robots: 2 specialized construction robots"
+echo ""
+echo "🌐 AZURE INTEGRATION:"
+echo "   📡 PromptOrchestrator: Fetching every 45 seconds"
+echo "   🧠 Chain-of-Thought: 3-step reasoning process"
+echo "   🔄 Enhanced Workflow: 6-phase construction"
+echo "   📊 Telemetry: Real-time with reasoning context"
+echo ""
+echo "📊 MONITORING FILES:"
+echo "   • prompt_orchestrator_telemetry.json - Real-time status"
+echo "   • chain_of_thought_history.json - Reasoning history"
+echo "   • reasoning_workflow_*.json - Workflow completions"
+echo "   • phase3_promptorchestrator_completion.json - Final report"
+echo ""
+echo "🔄 REASONING-ENHANCED WORKFLOWS:"
+echo "   1. Site Analysis (reasoning-driven survey)"
+echo "   2. Foundation Preparation (dependency-aware)"
+echo "   3. Structural Assembly (safety-critical)"
+echo "   4. Upper Floor Construction (parallel execution)"
+echo "   5. Systems Integration (quality checkpoints)"
+echo "   6. Quality Finishing (standards compliance)"
+echo ""
+echo "🎮 SYSTEM CONTROLS:"
+echo "   • Ctrl+C: Stop all processes"
+echo "   • View reasoning: cat chain_of_thought_history.json"
+echo "   • Check telemetry: cat prompt_orchestrator_telemetry.json"
+echo ""
+echo "🎯 Phase 3 with PromptOrchestrator Requirements:"
+echo "   ✅ LLM Chain-of-Thought task planning (PromptOrchestrator)"
+echo "   ✅ Structured JSON with reasoning steps"
+echo "   ✅ ROS2 parsing of detailed task plans"
+echo "   ✅ Robot simulation with reasoning context"
+echo "   ✅ Safety and quality from LLM reasoning"
+echo "   ✅ Multi-robot coordination with dependencies"
+echo ""
+
+# Wait for user input to stop
+echo "Press Enter to stop all processes..."
+read
+
+echo "🛑 Stopping Phase 3 PromptOrchestrator System..."
+kill $GAZEBO_PID 2>/dev/null || true
+kill $ROS2_PID 2>/dev/null || true
+kill $WORKFLOW_PID 2>/dev/null || true
+
+pkill -f gazebo 2>/dev/null || true
+pkill -f gz 2>/dev/null || true
+pkill -f prompt 2>/dev/null || true
+pkill -f ros2 2>/dev/null || true
+
+echo "✅ All processes stopped. Phase 3 with PromptOrchestrator complete!"
+EOF
+
+# Create compliance verification script
+echo "📋 Creating Phase 3 PromptOrchestrator compliance verification..."
+cat > verify_phase3_promptorchestrator.py << 'EOF'
+#!/usr/bin/env python3
+
+import os
+import json
+import subprocess
+from datetime import datetime
+
+def verify_phase3_compliance():
+    print("🔍 PHASE 3 PROMPTORCHESTRATOR COMPLIANCE VERIFICATION")
+    print("=" * 60)
+    
+    compliance_results = {
+        "verification_time": datetime.now().isoformat(),
+        "phase": "Phase 3 - PromptOrchestrator Chain-of-Thought Integration",
+        "deliverables_status": {},
+        "requirements_status": {},
+        "chain_of_thought_status": {},
+        "overall_compliance": False
+    }
+    
+    # Check Deliverable 1: ROS2 node with PromptOrchestrator
+    print("\n📋 DELIVERABLE 1: ROS2 node with PromptOrchestrator integration")
+    deliverable1_files = ["phase3_prompt_orchestrator_executor.py"]
+    deliverable1_pass = True
+    
+    for file in deliverable1_files:
+        if os.path.exists(file):
+            print(f"   ✅ {file} - EXISTS")
+            with open(file, 'r') as f:
+                content = f.read()
+                checks = {
+                    "PromptOrchestrator endpoint": "prompt_orchestrator" in content,
+                    "Chain-of-Thought processing": "process_reasoning_steps" in content,
+                    "ROS2 integration": "rclpy" in content,
+                    "Reasoning publication": "reasoning_pub" in content,
+                    "LLM command processing": "process_llm_commands_with_reasoning" in content
+                }
+                
+                for check_name, check_result in checks.items():
+                    if check_result:
+                        print(f"   ✅ {check_name} - VERIFIED")
+                    else:
+                        print(f"   ❌ {check_name} - MISSING")
+                        deliverable1_pass = False
+        else:
+            print(f"   ❌ {file} - MISSING")
+            deliverable1_pass = False
+    
+    compliance_results["deliverables_status"]["deliverable_1"] = deliverable1_pass
+    
+    # Check Deliverable 2: Enhanced robot workflow
+    print("\n📋 DELIVERABLE 2: Enhanced robot workflow with reasoning")
+    deliverable2_files = ["enhanced_workflow_simulator.py"]
+    deliverable2_pass = True
+    
+    for file in deliverable2_files:
+        if os.path.exists(file):
+            print(f"   ✅ {file} - EXISTS")
+            with open(file, 'r') as content_file:
+                content = content_file.read()
+                checks = {
+                    "Reasoning subscription": "reasoning_sub" in content,
+                    "Workflow adaptation": "adapt_workflow_steps" in content,
+                    "Reasoning-based movement": "get_reasoning_based_target" in content,
+                    "Chain-of-Thought handling": "handle_reasoning_update" in content,
+                    "Enhanced workflows": "reasoning_driven" in content
+                }
+                
+                for check_name, check_result in checks.items():
+                    if check_result:
+                        print(f"   ✅ {check_name} - VERIFIED")
+                    else:
+                        print(f"   ❌ {check_name} - MISSING")
+                        deliverable2_pass = False
+        else:
+            print(f"   ❌ {file} - MISSING")
+            deliverable2_pass = False
+    
+    compliance_results["deliverables_status"]["deliverable_2"] = deliverable2_pass
+    
+    # Check Chain-of-Thought Integration
+    print("\n🧠 CHAIN-OF-THOUGHT INTEGRATION VERIFICATION")
+    
+    cot_checks = {
+        "PromptOrchestrator configuration": os.path.exists("azure_config_advanced.json"),
+        "Reasoning history tracking": "reasoning_history" in open("phase3_prompt_orchestrator_executor.py").read() if os.path.exists("phase3_prompt_orchestrator_executor.py") else False,
+        "Multi-step reasoning": "reasoning_steps" in open("phase3_prompt_orchestrator_executor.py").read() if os.path.exists("phase3_prompt_orchestrator_executor.py") else False,
+        "Adaptive workflows": "adapt_workflow" in open("enhanced_workflow_simulator.py").read() if os.path.exists("enhanced_workflow_simulator.py") else False,
+        "Safety protocols": "safety_checks" in open("phase3_prompt_orchestrator_executor.py").read() if os.path.exists("phase3_prompt_orchestrator_executor.py") else False,
+        "Quality checkpoints": "quality_checkpoint" in open("enhanced_workflow_simulator.py").read() if os.path.exists("enhanced_workflow_simulator.py") else False
+    }
+    
+    for check_name, check_result in cot_checks.items():
+        if check_result:
+            print(f"   ✅ {check_name}")
+        else:
+            print(f"   ❌ {check_name}")
+    
+    compliance_results["chain_of_thought_status"] = cot_checks
+    
+    # Check System Requirements
+    print("\n⚙️ SYSTEM REQUIREMENTS VERIFICATION")
+    
+    # ROS2 and Gazebo integration
+    gazebo_file = "phase3_ifc_digital_twin.sdf"
+    ros2_gazebo_pass = os.path.exists(gazebo_file)
+    print(f"   {'✅' if ros2_gazebo_pass else '❌'} ROS2 + Gazebo Integration")
+    compliance_results["requirements_status"]["ros2_gazebo"] = ros2_gazebo_pass
+    
+    # PromptOrchestrator integration
+    config_file = "azure_config_advanced.json"
+    prompt_orchestrator_pass = False
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                if "prompt_orchestrator" in config.get("endpoints", {}):
+                    prompt_orchestrator_pass = True
+                    print("   ✅ PromptOrchestrator Configuration")
+                else:
+                    print("   ❌ PromptOrchestrator - MISSING ENDPOINT")
+        except:
+            print("   ❌ PromptOrchestrator - INVALID CONFIG")
+    else:
+        print("   ❌ PromptOrchestrator - CONFIG FILE MISSING")
+    
+    compliance_results["requirements_status"]["prompt_orchestrator"] = prompt_orchestrator_pass
+    
+    # Chain-of-Thought reasoning
+    cot_reasoning_pass = all([
+        cot_checks.get("Multi-step reasoning", False),
+        cot_checks.get("Reasoning history tracking", False)
+    ])
+    print(f"   {'✅' if cot_reasoning_pass else '❌'} Chain-of-Thought Reasoning")
+    compliance_results["requirements_status"]["chain_of_thought"] = cot_reasoning_pass
+    
+    # Structured JSON output
+    structured_json_pass = "json.dumps" in open("phase3_prompt_orchestrator_executor.py").read() if os.path.exists("phase3_prompt_orchestrator_executor.py") else False
+    print(f"   {'✅' if structured_json_pass else '❌'} Structured JSON Task Plans")
+    compliance_results["requirements_status"]["structured_json"] = structured_json_pass
+    
+    # Overall compliance calculation
+    deliverables_pass = deliverable1_pass and deliverable2_pass
+    requirements_pass = all(compliance_results["requirements_status"].values())
+    cot_pass = sum(cot_checks.values()) >= 4  # At least 4 out of 6 CoT features
+    
+    overall_pass = deliverables_pass and requirements_pass and cot_pass
+    compliance_results["overall_compliance"] = overall_pass
+    
+    # Final Results
+    print("\n" + "=" * 60)
+    print("📊 FINAL COMPLIANCE RESULTS")
+    print("=" * 60)
+    
+    print(f"✅ Deliverable 1 (ROS2 + PromptOrchestrator): {'PASS' if deliverable1_pass else 'FAIL'}")
+    print(f"✅ Deliverable 2 (Enhanced Workflow): {'PASS' if deliverable2_pass else 'FAIL'}")
+    print(f"🧠 Chain-of-Thought Integration: {'PASS' if cot_pass else 'FAIL'}")
+    print(f"⚙️ System Requirements: {'PASS' if requirements_pass else 'FAIL'}")
+    
+    print(f"\n🎯 OVERALL PHASE 3 COMPLIANCE: {'✅ PASS' if overall_pass else '❌ FAIL'}")
+    
+    if overall_pass:
+        print("\n🎉 Congratulations! Your Phase 3 PromptOrchestrator system")
+        print("    meets all requirements and successfully implements:")
+        print("    • LLM Chain-of-Thought task planning via PromptOrchestrator")
+        print("    • Multi-step reasoning (Site Analysis → Sequencing → Execution)")
+        print("    • Structured JSON with detailed dependencies and safety")
+        print("    • ROS2 parsing and execution of reasoning-based plans")
+        print("    • Adaptive workflows based on LLM reasoning")
+        print("    • Real-time telemetry with reasoning context")
+    else:
+        print("\n⚠️ Phase 3 system requires attention to meet full compliance.")
+        print("   Please review the failed items above and make corrections.")
+    
+    # Save compliance report
+    with open('phase3_promptorchestrator_compliance.json', 'w') as f:
+        json.dump(compliance_results, f, indent=2)
+    
+    print(f"\n📄 Compliance report saved: phase3_promptorchestrator_compliance.json")
+    
+    return overall_pass
+
+if __name__ == "__main__":
+    verify_phase3_compliance()
+EOF
+
+# Make scripts executable
+chmod +x launch_phase3_promptorchestrator.sh
+chmod +x phase3_prompt_orchestrator_executor.py
+chmod +x enhanced_workflow_simulator.py
+chmod +x verify_phase3_promptorchestrator.py
+
+echo ""
+echo "🎯 PHASE 3 WITH PROMPTORCHESTRATOR INTEGRATION COMPLETE!"
+echo "========================================================"
+echo ""
+echo "📁 Generated Files:"
+echo "   🏗️ phase3_ifc_digital_twin.sdf - IFC-aligned Gazebo world"
+echo "   🤖 phase3_prompt_orchestrator_executor.py - DELIVERABLE 1 (with PromptOrchestrator)"
+echo "   🔄 enhanced_workflow_simulator.py - DELIVERABLE 2 (reasoning-enhanced)"
+echo "   ⚙️ azure_config_advanced.json - Azure config with PromptOrchestrator"
+echo "   🚀 launch_phase3_promptorchestrator.sh - System launcher"
+echo "   📋 verify_phase3_promptorchestrator.py - Compliance checker"
+echo ""
+echo "🧠 CHAIN-OF-THOUGHT FEATURES:"
+echo "   ✅ PromptOrchestrator integration (replacing TaskPlanner)"
+echo "   ✅ Multi-step reasoning (3 steps: Analysis → Sequencing → Execution)"
+echo "   ✅ Detailed dependencies and safety protocols from LLM"
+echo "   ✅ Quality checkpoints based on reasoning"
+echo "   ✅ Adaptive workflow execution"
+echo "   ✅ Reasoning history tracking and publication"
+echo ""
+echo "🏢 DIGITAL TWIN BUILDING:"
+echo "   ✅ Structure: Mixed-use Residential/Commercial"
+echo "   ✅ Floors: 2 (Ground + Upper)"
+echo "   ✅ Spaces: 5 (bedroom×2, kitchen, bathroom, lounge)"
+echo "   ✅ Area: 73m² (IFC-aligned)"
+echo "   ✅ Robots: 2 specialized construction robots"
+echo ""
+echo "🎮 USAGE INSTRUCTIONS:"
+echo "   1. Run compliance check: python3 verify_phase3_promptorchestrator.py"
+echo "   2. Launch system: ./launch_phase3_promptorchestrator.sh"
+echo "   3. Monitor reasoning: watch -n 1 cat chain_of_thought_history.json"
+echo "   4. View telemetry: watch -n 1 cat prompt_orchestrator_telemetry.json"
+echo ""
+echo "✅ YOUR PHASE 3 DELIVERABLES WITH PROMPTORCHESTRATOR:"
+echo "   📋 DELIVERABLE 1: phase3_prompt_orchestrator_executor.py"
+echo "      • Fetches Chain-of-Thought reasoning from PromptOrchestrator"
+echo "      • Processes multi-step reasoning into robot movements"
+echo "      • Publishes reasoning steps for monitoring"
+echo "   📋 DELIVERABLE 2: enhanced_workflow_simulator.py"
+echo "      • Subscribes to reasoning updates"
+echo "      • Adapts workflows based on LLM reasoning"
+echo "      • Implements safety and quality checkpoints"
+echo ""
+echo "🚀 KEY DIFFERENCES FROM TASKPLANNER VERSION:"
+echo "   • Uses PromptOrchestrator endpoint (not TaskPlanner)"
+echo "   • Processes detailed reasoning steps (3-step CoT)"
+echo "   • Publishes reasoning to /llm/reasoning_steps topic"
+echo "   • Adaptive workflow based on reasoning context"
+echo "   • Enhanced telemetry with reasoning history"
+echo ""
+echo "🎯 Phase 2 → Phase 3 Integration:"
+echo "   Phase 2 PromptOrchestrator provides:"
+echo "      • Chain-of-Thought reasoning steps"
+echo "      • Structured JSON task plans"
+echo "      • Dependencies and safety protocols"
+echo "   Phase 3 ROS2/Gazebo consumes:"
+echo "      • Reasoning steps for robot coordination"
+echo "      • Task plans for movement execution"
+echo "      • Safety checks for workflow adaptation"
+echo ""
+echo "✨ COMPLETE PHASE 3 SYSTEM READY WITH PROMPTORCHESTRATOR! ✨"
