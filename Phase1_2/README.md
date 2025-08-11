@@ -153,3 +153,78 @@ IFC parsing is regex-based, not full geometry parsing.
 Floor/space mapping is heuristic when explicit relationships are missing.
 
 RobotStatus is simulated — replace with actual telemetry.
+
+
+📌 For Other Users
+If you want to run this Phase 1–2 pipeline on your own setup, follow these steps.
+
+1️⃣ Prerequisites
+An Azure Subscription with:
+
+Azure Digital Twins
+
+Azure OpenAI (optional but recommended for LLM task planning)
+
+Azure Function App (Python runtime)
+
+Azure Storage Account (if using blob storage)
+
+Role Assignments: Grant your Function App’s managed identity:
+
+Azure Digital Twins Data Owner (write access) or Azure Digital Twins Data Reader (read-only)
+→ Assign this role to your ADT instance.
+
+2️⃣ Environment & Tools
+Python 3.10+ (matching your Function App runtime)
+
+Azure CLI (az login)
+
+Azure Functions Core Tools (func CLI)
+
+Install dependencies:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+3️⃣ Configuration
+Set the following Application Settings in your Azure Function App (via Azure Portal → Configuration) or locally in local.settings.json:
+
+Setting Name	Description
+DIGITAL_TWINS_URL	Your Azure Digital Twins instance URL
+AZURE_OPENAI_ENDPOINT	Your Azure OpenAI endpoint (if using LLM)
+AZURE_OPENAI_API_KEY	API key for Azure OpenAI (store securely)
+STORAGE_CONNECTION_STRING	(Optional) Azure Storage connection string
+
+Local Testing:
+Set API key as an environment variable:
+
+bash
+Copy
+Edit
+export AZURE_OPENAI_API_KEY="your_api_key"
+4️⃣ Deployment
+Edit the deploy_enhanced.sh script and replace the placeholder:
+
+bash
+Copy
+Edit
+func azure functionapp publish <your-function-app-name> --python
+with your actual Function App name.
+
+Run:
+
+bash
+Copy
+Edit
+bash deploy_enhanced.sh
+5️⃣ Endpoints
+Once deployed, you can call:
+
+ModelUploader → Uploads DTDL models to ADT
+
+UploadBIM → Converts IFC to twins
+
+PromptOrchestrator / TaskPlanner → Generates task plans (if LLM enabled)
+
+TaskOutputGenerator → Outputs commands for ROS2
