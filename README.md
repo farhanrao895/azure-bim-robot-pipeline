@@ -14,7 +14,7 @@ The pipeline is modular, with each phase building on the previous one.
 |------:|:------:|-------------|
 | **Phase 1-2** | [Phase 1-2](./Phase%201-2) | **BIM → Digital Twin Conversion** (Phase 1) and **LLM Task Orchestration** (Phase 2). Converts BIM models into Azure Digital Twins, stores them in Azure Blob Storage, and uses Azure OpenAI to generate structured task plans. |
 | **Phase 3** | [Phase 3](./Phase%203) | **Robotic Task Simulation.** Integrates Azure PromptOrchestrator with ROS2 & Gazebo to simulate multi-robot construction workflows using LLM-driven multi-step reasoning. |
-| **Phase 4** | [Phase 4](./Phase%204) | **Automation & Orchestration.** Will use Azure Functions, Logic Apps, and IoT Hub to automate triggering of LLM reasoning and robotic execution based on Digital Twin changes. |
+| **Phase 4** | [Phase 4](./Phase%204) | **Automation & Orchestration.** Integrate IoT telemetry dashboards for monitoring |
 | **Phase 5** | *(This repo)* | **Version Control & DevOps.** Full GitHub repository with documentation, deployment scripts, and test data for all completed phases. |
 
 ---
