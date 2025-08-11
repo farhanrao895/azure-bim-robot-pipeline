@@ -51,6 +51,17 @@ The pipeline is modular, with each phase building on the previous one.
 - **Phase 3:** See [Phase 3/README.md](./Phase%203/README.md) for complete instructions on running the ROS2 & Gazebo simulation with PromptOrchestrator.  
 - **Phase 4:** See [Phase 4/README.md](./Phase%204/README.md) for instructions on running the IoT telemetry dashboard.
 
+📌 Code Availability
+This repository contains two full runnable codebases:
+
+Phase 1–2 complete code → Located in the Phase 1-2 folder (.py file) — Creates all components for those phases.
+
+Phase 3 complete code → Located in the Phase 3 folder (.py file) — Creates and runs the full simulation.
+
+Each can be run independently in their respective folders.
+
+
+
 ---
 
 ## 🔧 Prerequisites
