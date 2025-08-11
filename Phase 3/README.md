@@ -191,6 +191,130 @@ Workflow progress metrics
 System performance logs
 
 
+👥 For Other Users
+If you want to run Phase 3 on your own setup, follow these steps.
+1️⃣ Prerequisites
+System Requirements
+
+ROS2 Humble + Gazebo Garden installed
+Python 3.8+ environment
+Ubuntu 22.04 (recommended) or compatible OS
+GPU support recommended for Gazebo visualization
+
+Azure Resources (Optional but recommended)
+
+Azure OpenAI – For task reasoning via PromptOrchestrator
+Azure Digital Twins – For telemetry integration
+Azure Function App – Hosting Phase 2 endpoints
+
+2️⃣ Environment Setup
+Install ROS2 Dependencies
+bash# Add ROS2 repository
+sudo apt update && sudo apt install curl gnupg lsb-release
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+# Install ROS2 Humble
+sudo apt update
+sudo apt install ros-humble-desktop
+
+# Source ROS2
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+Install Python Dependencies
+bash# Create virtual environment (optional but recommended)
+python3 -m venv phase3_env
+source phase3_env/bin/activate
+
+# Install required packages
+pip install requests rclpy geometry-msgs std-msgs pyyaml
+3️⃣ Configuration
+Edit Azure Configuration
+Update azure_config_advanced.json with your Azure endpoints:
+json{
+  "base_url": "https://YOUR-FUNCTION-APP.azurewebsites.net",
+  "function_code": "YOUR-FUNCTION-CODE",
+  "building_id": "building-your-ifc-file",
+  "endpoints": {
+    "prompt_orchestrator": "/api/PromptOrchestrator",
+    "task_output_generator": "/api/TaskOutputGenerator"
+  },
+  "orchestration_settings": {
+    "complexity": "detailed",
+    "enable_chain_of_thought": true,
+    "reasoning_depth": 3
+  },
+  "world_settings": {
+    "world_name": "phase3_ifc_digital_twin",
+    "building_area": 73,
+    "robot1_start": {"x": -3.5, "y": -2.0, "z": 0.5},
+    "robot2_start": {"x": 4.0, "y": 1.5, "z": 4.7}
+  }
+}
+Local Testing Without Azure
+For testing without Azure connection, set mock mode in the executor:
+python# In phase3_prompt_orchestrator_executor.py, line 45:
+MOCK_MODE = True  # Set to True for local testing without Azure
+4️⃣ Building Your Own World
+If you want to use your own building model:
+
+Create SDF file from your IFC model
+Update robot spawn positions in the SDF
+Modify space coordinates in azure_config_advanced.json
+Adjust floor elevations based on your building
+
+5️⃣ Launch Sequence
+Option A: Full System Launch
+bash# Navigate to Phase 3 directory
+cd ~/phase3_ros_gazebo
+
+# Make scripts executable
+chmod +x launch_phase3_promptorchestrator.sh
+
+# Launch everything
+./launch_phase3_promptorchestrator.sh
+Option B: Component-by-Component
+bash# Terminal 1: Launch Gazebo with your world
+gz sim phase3_ifc_digital_twin.sdf
+
+# Terminal 2: Start ROS2 executor
+python3 phase3_prompt_orchestrator_executor.py
+
+# Terminal 3: Start workflow simulator
+python3 enhanced_workflow_simulator.py
+6️⃣ Verification & Testing
+Check System Status
+bash# Verify ROS2 topics are active
+ros2 topic list
+
+# Should show:
+# /move_base_simple/goal
+# /excavator/cmd_vel
+# /robot/level
+# /robot/install
+# /robot/finish
+# /digital_twin/status
+# /llm/reasoning_steps
+# /robot_workflow_status
+Run Compliance Check
+bashpython3 verify_phase3_promptorchestrator.py
+7️⃣ Troubleshooting for New Users
+IssueSolution"No module named 'rclpy'"Install ROS2: sudo apt install python3-rclpy"gz: command not found"Install Gazebo: sudo apt install gz-garden"Connection refused to Azure"Check firewall and Azure Function URL"Robots not visible in Gazebo"Check SDF file path and robot spawn coordinates"No reasoning steps received"Verify PromptOrchestrator endpoint in Phase 2
+8️⃣ Customization Options
+Modify Robot Behavior
+Edit enhanced_workflow_simulator.py:
+python# Line 89: Adjust workflow timing
+self.workflow_timer = self.create_timer(10.0, self.advance_workflow)  # Change interval
+
+# Line 156: Modify robot speed
+cmd.linear.x = 0.5  # Increase speed
+Change Building Layout
+Edit phase3_ifc_digital_twin.sdf:
+xml<!-- Add new room -->
+<model name="new_room">
+  <pose>x y z 0 0 0</pose>
+  <!-- Room geometry -->
+</model>
+
 ✅ Verification & Testing
 Run Compliance Check
 bashpython3 verify_phase3_promptorchestrator.py
@@ -250,3 +374,5 @@ Phase 3 successfully demonstrates:
 ✅ Multi-robot coordination across multiple floors
 ✅ Real-time telemetry and workflow adaptation
 ✅ IFC-aligned Digital Twin building simulation
+
+The deliverables provide a complete, working system that bridges cloud-based AI reasoning with local robotic simulation, ready for Phase 4 automation and orchestration.
