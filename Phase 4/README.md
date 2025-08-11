@@ -1,7 +1,7 @@
-# 🏗️ Azure ROS2 Construction Pipeline Visualizer
+# 🏗️ Azure ROS2 Construction Dashboard
 
 ## 📌 Overview
-The **Azure ROS2 Construction Pipeline Visualizer** is a real-time monitoring dashboard that displays live commands from **Azure AI → ROS2 → Gazebo** for a simulated construction site.  
+The **Azure ROS2 Construction Dashboard** is a real-time monitoring dashboard that displays live commands from **Azure AI → ROS2 → Gazebo** for a simulated construction site.  
 It visualizes robot activity such as:
 - **Navigation** 🧭
 - **Excavation** ⛏️
@@ -12,6 +12,8 @@ It visualizes robot activity such as:
 This tool is part of **Phase 4** in the Azure BIM-to-Digital Twin & Robotics integration project.
 
 ---
+![Uploading image.png…]()
+
 
 ## 🚀 Features
 - Live ROS2 topic subscription and monitoring
