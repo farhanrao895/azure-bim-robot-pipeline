@@ -35,9 +35,9 @@ The pipeline is modular, with each phase building on the previous one.
 - Fetch reasoning-driven task plans from **Azure PromptOrchestrator**.  
 - Execute tasks in real time with telemetry feedback to Azure.
 
-### Phase 4 – Automation & Orchestration *(Planned)*
-- Trigger task generation and simulation automatically when Digital Twin states change.  
+### Phase 4 – Automation & Orchestration
 - Integrate IoT telemetry dashboards for monitoring.
+
 
 ### Phase 5 – Version Control & DevOps
 - Maintain complete infrastructure and application code in GitHub.  
