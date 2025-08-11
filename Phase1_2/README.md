@@ -192,6 +192,10 @@ func azure functionapp publish YOUR-FUNCTION-APP-NAME --python
 5️⃣ Verify Deployment
 Test each endpoint using the examples above, replacing localhost:7071 with your Function App URL.
 
+📌 Code Availability
+This repository contains two full runnable codebases:
+
+Phase 1–2 complete code → Located in the Phase 1-2 folder (Complete_Phase_1_2_Code.py file) — Creates all components for those phases.
 ⚠️ Known Limitations
 
 IFC Parsing: Regex-based extraction (not full geometry processing)
