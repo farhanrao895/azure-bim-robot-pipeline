@@ -193,7 +193,7 @@ func azure functionapp publish YOUR-FUNCTION-APP-NAME --python
 Test each endpoint using the examples above, replacing localhost:7071 with your Function App URL.
 
 📌 Code Availability
-This repository contains two full runnable codebases:
+This repository contains full runnable codebases:
 
 Phase 1–2 complete code → Located in the Phase 1-2 folder (Complete_Phase_1_2_Code.py file) — Creates all components for those phases.
 ⚠️ Known Limitations
