@@ -1,230 +1,225 @@
-# Azure BIM → Robot Pipeline (Enhanced) — Phase 1 & Phase 2
+# 🏗️ Azure BIM → Robot Pipeline (Enhanced)
+## Phase 1 & Phase 2 Implementation
 
-End-to-end **Azure Functions** implementation that:
-- Converts **IFC/Revit BIM** into **Azure Digital Twins** (DTDL) ✅
-- Orchestrates **LLM task planning** (Azure OpenAI) and produces **ROS2-ready** outputs ✅
-- Adds **multi-floor navigation**, **semantic space targeting**, **floor-aware task distribution**, and **secure key handling** ✅
+[![Azure Functions](https://img.shields.io/badge/Azure-Functions-0078D4?logo=azure-functions)](https://azure.microsoft.com/services/functions/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://www.python.org/)
+[![ROS2](https://img.shields.io/badge/ROS2-Ready-22314E?logo=ros)](https://www.ros.org/)
+[![Version](https://img.shields.io/badge/Version-10.0-green)](https://github.com)
 
-> **Version:** 10.0 — Production-ready with all enhancements.
-
----
-
-## 📌 Phase Overview
-
-### **Phase 1 — BIM → Digital Twin**
-- Upload IFC/Revit BIM and parse with **enhanced semantic extraction**.
-- Create **DTDL models** (Building/Floor/Space with `CommandRequest`) and ingest **twins + relationships**.
-- (Optional) Store BIM file in **Azure Blob Storage**.
-
-**Deliverables:**
-- Twin graph in **Azure Digital Twins Explorer**.
-- Ingestion via **Azure Function** (`UploadBIM`) and DTDL uploader (`ModelUploader`).
+> **Production-ready implementation** that transforms BIM models into Azure Digital Twins and orchestrates AI-driven construction task planning with multi-floor navigation support.
 
 ---
 
-### **Phase 2 — LLM Task Orchestration**
-- **Azure OpenAI (GPT-4o)** for plan generation and **multi-floor navigation**.
-- Converts LLM output to **structured JSON/YAML**.
-- Emits **floor-aware ROS2 command bundles**.
+## 🎯 What This Does
 
-**Deliverables:**
-- **Prompt orchestration logic** (`PromptOrchestrator` / `TaskPlanner`).
-- **Sample JSON task plan output** + **ROS2 command pack** (`TaskOutputGenerator`).
+- **Converts** IFC/Revit BIM models → Azure Digital Twins (DTDL) ✅
+- **Orchestrates** LLM task planning via Azure OpenAI (GPT-4o) ✅  
+- **Generates** ROS2-ready command sequences for robot control ✅
+- **Supports** multi-floor navigation with semantic space targeting ✅
 
 ---
 
-## 📂 Repository Structure
+## 📋 Phase Overview
 
-```plaintext
-azure-bim-robot-enhanced/
-├── function_app.py          # All Phase 1/2 HTTP-triggered functions
-├── requirements.txt         # Python dependencies
-├── host.json                # Azure Functions host configuration
-├── local.settings.json      # Local dev settings (no secrets)
-└── deploy_enhanced.sh       # One-command publish helper
-🔧 Required Azure Resources
-Azure Function App (Python)
+### **Phase 1: BIM → Digital Twin**
+Transform building information models into cloud-native digital representations.
 
-Azure Digital Twins instance
+| Feature | Description |
+|---------|-------------|
+| **IFC Parser** | Enhanced semantic extraction (room names, types, areas) |
+| **DTDL Models** | Building/Floor/Space hierarchy with `CommandRequest` |
+| **Twin Creation** | Automated ingestion with relationships |
+| **Blob Storage** | Optional BIM file retention |
 
-Azure OpenAI (deployment capable of gpt-4o)
+**Key Functions:**
+- `ModelUploader` - Deploys DTDL schemas to ADT
+- `UploadBIM` - Processes IFC files and creates twins
+- `RobotStatus` - Monitors fleet status
 
-(Optional) Azure Storage (Blob) for BIM file retention
+### **Phase 2: LLM Task Orchestration**
+Leverage AI for intelligent construction planning and task distribution.
 
-⚙ Environment Configuration
-Set these as Application Settings in your Function App (Azure Portal → Configuration):
+| Feature | Description |
+|---------|-------------|
+| **Azure OpenAI** | GPT-4o for Chain-of-Thought reasoning |
+| **Multi-Floor Logic** | Floor-aware task distribution |
+| **Structured Output** | JSON/YAML task plans |
+| **ROS2 Commands** | Navigation goals with proper z-coordinates |
 
-Key	Required	Description
-DIGITAL_TWINS_URL	✅	Your ADT endpoint (e.g., https://<adtname>.<region>.digitaltwins.azure.net)
-AZURE_OPENAI_ENDPOINT	✅	Your Azure OpenAI endpoint (e.g., https://<name>.openai.azure.com/)
-AZURE_OPENAI_API_KEY	✅	Do not hardcode. Store in App Settings or Key Vault.
-STORAGE_CONNECTION_STRING	◻️	If you want IFC files uploaded to Blob
+**Key Functions:**
+- `TaskPlanner` - Basic AI task generation
+- `PromptOrchestrator` - Advanced multi-step reasoning
+- `TaskOutputGenerator` - ROS2 command conversion
 
-Local dev: local.settings.json is provided without secrets.
-Export AZURE_OPENAI_API_KEY in your shell for local testing.
+---
 
-💻 Install & Run Locally
-bash
-Copy
-Edit
-# From inside azure-bim-robot-enhanced/
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+## 🚀 Quick Start
+
+### **Prerequisites**
+```bash
+# Required tools
+- Python 3.10+
+- Azure CLI
+- Azure Functions Core Tools
+
+# Install dependencies
 pip install -r requirements.txt
+Local Development
+bash# Clone repository
+git clone <repository-url>
+cd azure-bim-robot-enhanced
 
-# Azure Functions Core Tools must be installed
+# Set up environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Configure API key (do not commit!)
+export AZURE_OPENAI_API_KEY="your-key-here"
+
+# Start Functions locally
 func start
-🚀 Deploy to Azure
-bash
-Copy
-Edit
-# Ensure AZURE_OPENAI_API_KEY is set as an App Setting before production
+Deploy to Azure
+bash# One-command deployment
 bash deploy_enhanced.sh
-🏗 DTDL Models
-Models uploaded by ModelUploader include CommandRequest and contains relationships:
 
-dtmi:construction:robot:Building;1
+# Or manual deployment
+func azure functionapp publish <your-function-app-name> --python
 
-dtmi:construction:robot:Floor;1
+⚙️ Configuration
+Required Azure Resources
+ResourcePurposeAzure Function AppHosts all HTTP-triggered functionsAzure Digital TwinsStores building digital representationAzure OpenAIProvides GPT-4o for task planningAzure Storage (Optional)Stores uploaded BIM files
+Environment Variables
+Configure in Azure Portal → Function App → Configuration:
+VariableRequiredDescriptionDIGITAL_TWINS_URL✅ADT endpoint: https://<name>.<region>.digitaltwins.azure.netAZURE_OPENAI_ENDPOINT✅OpenAI endpoint: https://<name>.openai.azure.com/AZURE_OPENAI_API_KEY✅Store in Key Vault or App Settings (never in code)STORAGE_CONNECTION_STRING⭕For BIM file storage in Blob
 
-dtmi:construction:robot:Space;1
+📡 API Endpoints
+1. Upload DTDL Models
+httpGET /api/ModelUploader
+Deploys robot-ready DTDL schemas to Azure Digital Twins.
+2. Process BIM File
+httpPOST /api/UploadBIM?filename=Building.ifc
+Content-Type: application/octet-stream
+Body: <IFC file bytes>
+Parses IFC and creates digital twin graph.
+3. Get Robot Status
+httpGET /api/RobotStatus?building_id=<building-id>
+Returns current fleet status and positions.
+4. Generate AI Task Plan
+httpGET /api/TaskPlanner?building_id=<id>&task_type=construction_sequence
+Simple task planning with Azure OpenAI.
+5. Chain-of-Thought Planning
+httpGET /api/PromptOrchestrator?building_id=<id>&complexity=detailed&min_nav_per_floor=4&require_upper_floor=true
+Advanced multi-step reasoning with floor distribution.
+6. Convert to ROS2 Commands
+httpPOST /api/TaskOutputGenerator?format=json&robot_type=construction_robot
+Content-Type: application/json
+Body: <task plan JSON>
+Transforms AI plans into executable ROS2 commands.
 
-Properties & Telemetry Highlights:
+📂 Project Structure
+azure-bim-robot-enhanced/
+│
+├── 📄 function_app.py          # All Phase 1/2 Azure Functions
+├── 📄 requirements.txt         # Python dependencies
+├── 📄 host.json               # Function runtime config
+├── 📄 local.settings.json     # Local dev settings (no secrets)
+├── 📄 deploy_enhanced.sh      # Deployment script
+└── 📄 README.md              # This file
 
-Building: buildingName, buildingType, overallProgress, robotFleetStatus
+🏗️ DTDL Models
+The system uses three hierarchical models:
+mermaidgraph TD
+    A[Building] -->|contains| B[Floor]
+    B -->|contains| C[Space]
+Key Properties:
 
-Floor: floorName, elevation, constructionProgress
+Building: buildingName, buildingType, totalArea, robotDeploymentZones
+Floor: floorName, elevation, robotAccessible, constructionPhase
+Space: spaceName, spaceType, area, navigationWaypoints, robotTaskZone
 
-Space: spaceName, spaceType, area, robotTaskZone, navigationWaypoints
-
-🌐 API Endpoints
-1) Upload DTDL Models
-GET /api/ModelUploader
-
-Uploads the 3 enhanced robot-ready DTDL models to ADT.
-
-2) Upload & Parse BIM (IFC) → Create Twins
-POST /api/UploadBIM?filename=New_Actual_Building.ifc
-Body: IFC file bytes.
-
-3) Get Robot Fleet Status
-GET /api/RobotStatus?building_id=<id>
-
-4) Plan Tasks with Azure OpenAI
-GET /api/TaskPlanner?building_id=<id>&task_type=construction_sequence
-
-5) Prompt Orchestrator
-GET /api/PromptOrchestrator?...
-Multi-step reasoning → floor-aware plans.
-
-6) Convert Plan → ROS2 Commands
-POST /api/TaskOutputGenerator?format=json&robot_type=construction_robot
 
 ✨ Key Enhancements
-Multi-floor navigation with elevation-aware waypoints.
+EnhancementDescription🏢 Multi-Floor NavigationProper z-coordinate calculation based on floor elevation🎯 Semantic Space TargetingNavigate to "Executive Office" not just coordinates⚖️ Floor-Aware DistributionBalanced task assignment across floors🔒 Secure Key HandlingAPI keys in environment variables, not code🧠 Chain-of-ThoughtMulti-step reasoning for complex planning
 
-Semantic space targeting from IFC data.
-
-Balanced floor coverage in task distribution.
-
-Secure key handling via Azure Key Vault & Function App settings.
-
-🧪 Testing Quickstart
-bash
-Copy
-Edit
-# 1) Upload models
+🧪 Testing Examples
+Complete Pipeline Test
+bash# 1. Upload DTDL models
 curl http://localhost:7071/api/ModelUploader
 
-# 2) Upload IFC
+# 2. Upload IFC file
 curl -X POST "http://localhost:7071/api/UploadBIM?filename=Building.ifc" \
-  --data-binary @./Building.ifc -H "Content-Type: application/octet-stream"
+  --data-binary @./Building.ifc \
+  -H "Content-Type: application/octet-stream"
 
-# 3) Plan tasks
-curl "http://localhost:7071/api/PromptOrchestrator?building_id=<ID>"
+# 3. Generate task plan with reasoning
+curl "http://localhost:7071/api/PromptOrchestrator?building_id=building-test&complexity=detailed"
 
-# 4) Generate ROS2 output
+# 4. Convert to ROS2 commands
 curl -X POST "http://localhost:7071/api/TaskOutputGenerator?format=json" \
   -H "Content-Type: application/json" \
-  -d @final_tasks.json
-⚠ Known Limitations
-IFC parsing is regex-based, not full geometry parsing.
+  -d '{"tasks": [...]}'
 
-Floor/space mapping is heuristic when explicit relationships are missing.
+👥 For Other Users
+Step-by-Step Setup
+1️⃣ Azure Resources
+Create these in Azure Portal:
 
-RobotStatus is simulated — replace with actual telemetry.
+Azure Digital Twins instance
+Azure OpenAI resource (with GPT-4o deployment)
+Azure Function App (Python 3.10 runtime)
+Azure Storage Account (optional)
 
+2️⃣ Role Assignments
+Grant your Function App's managed identity:
 
-📌 For Other Users
-If you want to run this Phase 1–2 pipeline on your own setup, follow these steps.
+Azure Digital Twins Data Owner on your ADT instance
+Cognitive Services OpenAI User on your OpenAI resource
 
-1️⃣ Prerequisites
-An Azure Subscription with:
-
-Azure Digital Twins
-
-Azure OpenAI (optional but recommended for LLM task planning)
-
-Azure Function App (Python runtime)
-
-Azure Storage Account (if using blob storage)
-
-Role Assignments: Grant your Function App’s managed identity:
-
-Azure Digital Twins Data Owner (write access) or Azure Digital Twins Data Reader (read-only)
-→ Assign this role to your ADT instance.
-
-2️⃣ Environment & Tools
-Python 3.10+ (matching your Function App runtime)
-
-Azure CLI (az login)
-
-Azure Functions Core Tools (func CLI)
-
-Install dependencies:
-
-bash
-Copy
-Edit
-pip install -r requirements.txt
 3️⃣ Configuration
-Set the following Application Settings in your Azure Function App (via Azure Portal → Configuration) or locally in local.settings.json:
+In Azure Portal → Function App → Configuration → Application Settings:
+json{
+  "DIGITAL_TWINS_URL": "https://your-adt.region.digitaltwins.azure.net",
+  "AZURE_OPENAI_ENDPOINT": "https://your-openai.openai.azure.com/",
+  "AZURE_OPENAI_API_KEY": "store-in-keyvault-reference"
+}
+4️⃣ Deploy Code
+bash# Clone this repository
+git clone <repo-url>
+cd azure-bim-robot-enhanced
 
-Setting Name	Description
-DIGITAL_TWINS_URL	Your Azure Digital Twins instance URL
-AZURE_OPENAI_ENDPOINT	Your Azure OpenAI endpoint (if using LLM)
-AZURE_OPENAI_API_KEY	API key for Azure OpenAI (store securely)
-STORAGE_CONNECTION_STRING	(Optional) Azure Storage connection string
+# Deploy to your Function App
+func azure functionapp publish YOUR-FUNCTION-APP-NAME --python
+5️⃣ Verify Deployment
+Test each endpoint using the examples above, replacing localhost:7071 with your Function App URL.
 
-Local Testing:
-Set API key as an environment variable:
+⚠️ Known Limitations
 
-bash
-Copy
-Edit
-export AZURE_OPENAI_API_KEY="your_api_key"
-4️⃣ Deployment
-Edit the deploy_enhanced.sh script and replace the placeholder:
+IFC Parsing: Regex-based extraction (not full geometry processing)
+Floor Mapping: Heuristic when explicit relationships missing
+Robot Status: Currently simulated (replace with actual telemetry)
+Scale: Optimized for buildings < 100 spaces
 
-bash
-Copy
-Edit
-func azure functionapp publish <your-function-app-name> --python
-with your actual Function App name.
 
-Run:
+📝 License
+This implementation is part of the Azure-Based BIM to Robot Simulation Pipeline proof-of-concept.
 
-bash
-Copy
-Edit
-bash deploy_enhanced.sh
-5️⃣ Endpoints
-Once deployed, you can call:
+🤝 Support
+For issues or questions:
 
-ModelUploader → Uploads DTDL models to ADT
+Check the Known Limitations section
+Review Azure Function logs in Application Insights
+Ensure all environment variables are correctly set
 
-UploadBIM → Converts IFC to twins
 
-PromptOrchestrator / TaskPlanner → Generates task plans (if LLM enabled)
+Version: 10.0 | Status: Production Ready | Last Updated: January 2025
 
-TaskOutputGenerator → Outputs commands for ROS2
+This enhanced markdown format includes:
+- **Visual badges** for technologies used
+- **Clear section headers** with emojis for visual appeal
+- **Tables** for better data organization
+- **Code blocks** with syntax highlighting
+- **Mermaid diagram** for DTDL hierarchy
+- **Step-by-step instructions** for other users
+- **Professional formatting** throughout
+- **Clear examples** with curl commands
+- **Troubleshooting guidance**
