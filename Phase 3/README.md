@@ -104,9 +104,7 @@ Azure Cloud (Phase 2)                     Local Simulation (Phase 3)
                                          └─────────────────────┘
 ⚙️ Installation & Setup
 Prerequisites
-bash
-Copy
-Edit
+
 # ROS2 Humble
 source /opt/ros/humble/setup.bash
 
@@ -117,14 +115,10 @@ sudo apt install gz-garden
 pip3 install requests rclpy geometry-msgs std-msgs
 🚀 Running the System
 Method 1 – Using Launch Script (Recommended)
-bash
-Copy
-Edit
+
 ./launch_phase3_promptorchestrator.sh
 Method 2 – Manual Component Launch
-bash
-Copy
-Edit
+
 # Terminal 1: Gazebo
 gz sim phase3_ifc_digital_twin.sdf
 
@@ -134,9 +128,7 @@ python3 phase3_prompt_orchestrator_executor.py
 # Terminal 3: Workflow simulator
 python3 enhanced_workflow_simulator.py
 Method 3 – Minimal Test Run
-bash
-Copy
-Edit
+
 source /opt/ros/humble/setup.bash
 pkill -f gazebo; pkill -f gz; pkill -f ros2
 
@@ -147,9 +139,7 @@ python3 enhanced_workflow_simulator.py &
 wait
 📊 Monitoring & Outputs
 Real-Time Monitoring
-bash
-Copy
-Edit
+
 watch -n 1 cat prompt_orchestrator_telemetry.json
 watch -n 1 cat chain_of_thought_history.json
 tail -f reasoning_workflow_*.json
@@ -215,21 +205,15 @@ Python 3.8+
 (Optional) Azure OpenAI & Digital Twins
 
 2️⃣ Setup
-bash
-Copy
-Edit
+
 pip install requests rclpy geometry-msgs std-msgs pyyaml
 Update azure_config_advanced.json with Azure endpoints.
 
 3️⃣ Run
-bash
-Copy
-Edit
+
 bash launch_phase3_promptorchestrator.sh
 4️⃣ Stop
-bash
-Copy
-Edit
+
 pkill -f gazebo
 pkill -f ros2
 📌 Code Availability
