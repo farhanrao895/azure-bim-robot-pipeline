@@ -195,7 +195,9 @@ Test each endpoint using the examples above, replacing localhost:7071 with your 
 📌 Code Availability
 This repository contains full runnable codebases:
 
-Phase 1–2 complete code → Located in the Phase 1-2 folder (Complete_Phase_1_2_Code.py file) — Creates all components for those phases.
+Phase 1–2 complete code → Located in the Phase 1-2 folder (Complete_Phase_1_2_Code.py file) — Creates all components for those
+phases.
+
 ⚠️ Known Limitations
 
 IFC Parsing: Regex-based extraction (not full geometry processing)
