@@ -215,15 +215,3 @@ Review Azure Function logs in Application Insights
 Ensure all environment variables are correctly set
 
 
-Version: 10.0 | Status: Production Ready | Last Updated: January 2025
-
-This enhanced markdown format includes:
-- **Visual badges** for technologies used
-- **Clear section headers** with emojis for visual appeal
-- **Tables** for better data organization
-- **Code blocks** with syntax highlighting
-- **Mermaid diagram** for DTDL hierarchy
-- **Step-by-step instructions** for other users
-- **Professional formatting** throughout
-- **Clear examples** with curl commands
-- **Troubleshooting guidance**
