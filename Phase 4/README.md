@@ -31,10 +31,6 @@ Phase 4/
 ├── requirements.txt # Python dependencies
 └── README.md # Documentation
 
-yaml
-Copy
-Edit
-
 ---
 
 ## 🛠️ Requirements
@@ -51,26 +47,18 @@ Install dependencies:
 pip install -r requirements.txt
 On Ubuntu/Debian systems, also run:
 
-bash
-Copy
-Edit
+
 sudo apt install python3-tk ros-${ROS_DISTRO}-geometry-msgs ros-${ROS_DISTRO}-std-msgs
 ▶️ Usage
 1️⃣ Navigate to the Phase 4 folder
-bash
-Copy
-Edit
+
 cd Phase\ 4
 2️⃣ Run the Visualizer
-bash
-Copy
-Edit
+
 python3 azure_construction_visualizer.py
 Ensure ROS2 is sourced before running:
 
-bash
-Copy
-Edit
+
 source /opt/ros/${ROS_DISTRO}/setup.bash
 📡 ROS2 Topics Monitored
 Topic	Message Type	Purpose
@@ -81,9 +69,7 @@ Topic	Message Type	Purpose
 /robot/finish	std_msgs/String	Finishing stage updates
 
 📊 Example Output
-less
-Copy
-Edit
+
 [12:30:05] 🧭 NAVIGATION: Robot moving to (4.0, 1.5, 0.0) in 73m² building
 [12:30:12] ⛏️ EXCAVATION: Linear: (0.20, 0.00, 0.00) - Azure AI foundation work
 [12:30:18] 📏 LEVELING: Ground leveling - Azure TaskOutputGenerator command
