@@ -35,8 +35,12 @@ Core ROS2 node that fetches **Chain-of-Thought reasoning** from Azure PromptOrch
 - 📊 Generates real-time telemetry in Azure-compatible JSON format
 - 📝 Tracks reasoning history and task completion
 
-
-
+**Key Functions:**
+```python
+fetch_prompt_orchestration()     # Fetches LLM reasoning from Azure
+process_reasoning_steps()         # Converts reasoning to structured tasks
+execute_llm_driven_movements()    # Moves robots based on LLM tasks
+publish_digital_twin_status()     # Sends telemetry to Azure
 🔹 Deliverable 2 – Simulated Robot Workflow
 PropertyDetailsFileenhanced_workflow_simulator.pySize22 KBPurposeManages 6-phase adaptive construction workflow
 Description:
