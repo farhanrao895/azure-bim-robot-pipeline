@@ -1,4 +1,4 @@
-markdown# 🤖 Phase 3 – Robotic Task Simulation with ROS2 & Gazebo
+🤖 Phase 3 – Robotic Task Simulation with ROS2 & Gazebo
 
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-22314E?logo=ros)](https://docs.ros.org/)
 [![Gazebo](https://img.shields.io/badge/Gazebo-Garden-orange)](https://gazebosim.org/)
